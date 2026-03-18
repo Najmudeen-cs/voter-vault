@@ -1,0 +1,1985 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>VoterVault — Secure Voter Identity System</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@300;400;500&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet"/>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg0:#080b10;--bg1:#0d1018;--bg2:#111520;--bg3:#161b28;--bg4:#1c2235;
+  --line:#1e2535;--line2:#263047;
+  --text:#dde3f2;--text2:#8a93ad;--text3:#4d5870;
+  --accent:#3d8ef0;--accent-dim:rgba(61,142,240,0.12);--accent-dim2:rgba(61,142,240,0.06);
+  --green:#2ec96b;--green-dim:rgba(46,201,107,0.1);
+  --amber:#f0a020;--amber-dim:rgba(240,160,32,0.1);
+  --red:#e03c55;--red-dim:rgba(224,60,85,0.1);
+  --gold:#d4a017;--gold-dim:rgba(212,160,23,0.1);
+  --mono:'DM Mono',monospace;--sans:'DM Sans',sans-serif;--r:5px;
+}
+html,body{height:100%;overflow:hidden}
+body{font-family:var(--sans);background:var(--bg0);color:var(--text);font-size:13px;display:flex;flex-direction:column;}
+
+/* TOPBAR */
+.topbar{height:46px;background:var(--bg1);border-bottom:1px solid var(--line);display:flex;align-items:center;padding:0 18px;flex-shrink:0;gap:0;}
+.brand{display:flex;align-items:center;gap:10px;padding-right:20px;border-right:1px solid var(--line);margin-right:8px;}
+.brand-ico{width:28px;height:28px;background:linear-gradient(135deg,#1a5fb4,#3d8ef0);border-radius:6px;display:flex;align-items:center;justify-content:center;}
+.brand-ico svg{width:16px;height:16px;fill:#fff}
+.brand-name{font-family:var(--mono);font-size:13px;font-weight:500;letter-spacing:0.04em;color:var(--text);}
+.brand-ver{font-family:var(--mono);font-size:10px;color:var(--text3);margin-left:2px;}
+.tb-tabs{display:flex;align-items:stretch;height:100%;flex:1;}
+.ttab{height:100%;padding:0 20px;display:flex;align-items:center;gap:8px;font-size:12px;color:var(--text3);cursor:pointer;border-bottom:2px solid transparent;transition:color .15s,border-color .15s,background .15s;white-space:nowrap;}
+.ttab:hover{color:var(--text2);background:rgba(255,255,255,.02)}
+.ttab.active{color:var(--text);border-bottom-color:var(--accent);background:var(--accent-dim2)}
+.ttab svg{width:14px;height:14px;opacity:.65;flex-shrink:0}
+.ttab.active svg{opacity:1}
+.tb-right{display:flex;align-items:center;gap:8px;padding-left:16px;border-left:1px solid var(--line);font-family:var(--mono);font-size:10px;color:var(--green);}
+.sdot{width:7px;height:7px;border-radius:50%;background:var(--green);box-shadow:0 0 7px var(--green);animation:pulse 2s infinite;}
+@keyframes pulse{0%,100%{box-shadow:0 0 5px var(--green)}50%{box-shadow:0 0 12px var(--green)}}
+
+/* LAYOUT */
+.app-body{display:flex;flex:1;overflow:hidden;}
+.sidebar{width:220px;background:var(--bg1);border-right:1px solid var(--line);display:flex;flex-direction:column;flex-shrink:0;overflow-y:auto;}
+.sidebar::-webkit-scrollbar{width:3px}.sidebar::-webkit-scrollbar-thumb{background:var(--line2)}
+.sb-lbl{font-family:var(--mono);font-size:9.5px;font-weight:500;color:var(--text3);letter-spacing:.12em;text-transform:uppercase;padding:12px 16px 5px;}
+.sb-item{display:flex;align-items:center;gap:10px;padding:8px 16px;color:var(--text2);font-size:12.5px;cursor:pointer;border-left:2px solid transparent;transition:all .12s;}
+.sb-item:hover{color:var(--text);background:rgba(255,255,255,.025)}
+.sb-item.active{color:var(--text);background:var(--accent-dim);border-left-color:var(--accent);}
+.sb-item svg{width:14px;height:14px;flex-shrink:0;opacity:.7}.sb-item.active svg{opacity:1}
+.sb-div{height:1px;background:var(--line);margin:6px 0;}
+.sb-bot{margin-top:auto;padding:12px 0;border-top:1px solid var(--line);}
+.content{flex:1;overflow-y:auto;background:var(--bg0);padding:22px 26px;}
+.content::-webkit-scrollbar{width:4px}.content::-webkit-scrollbar-thumb{background:var(--line2);border-radius:2px}
+
+/* PAGE HEADER */
+.ph{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:22px;padding-bottom:18px;border-bottom:1px solid var(--line);}
+.pt{font-size:17px;font-weight:600;letter-spacing:-.01em;}
+.ps{font-size:12px;color:var(--text3);margin-top:4px;font-family:var(--mono);}
+.pa{display:flex;gap:8px;flex-shrink:0;}
+
+/* PANELS */
+.panel{background:var(--bg1);border:1px solid var(--line);border-radius:var(--r);overflow:hidden;margin-bottom:16px;}
+.ph2{display:flex;align-items:center;justify-content:space-between;padding:10px 16px;border-bottom:1px solid var(--line);background:var(--bg2);}
+.ptitle{font-family:var(--mono);font-size:11px;font-weight:500;color:var(--text2);letter-spacing:.06em;text-transform:uppercase;display:flex;align-items:center;gap:8px;}
+.ptitle svg{width:13px;height:13px;opacity:.65}
+.pb{padding:16px;}
+
+/* GRID */
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:16px;}
+.g3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;}
+
+/* FORM FIELDS */
+.field{margin-bottom:14px;}.field:last-child{margin-bottom:0}
+.field label{display:block;font-size:11px;font-weight:500;color:var(--text2);margin-bottom:6px;letter-spacing:.03em;}
+.field label .req{color:var(--red);margin-left:2px;}
+.field input,.field textarea,.field select{width:100%;background:var(--bg0);border:1px solid var(--line2);border-radius:var(--r);color:var(--text);font-family:var(--mono);font-size:12px;padding:8px 12px;outline:none;transition:border-color .15s,box-shadow .15s;-webkit-appearance:none;}
+.field input:focus,.field textarea:focus,.field select:focus{border-color:var(--accent);box-shadow:0 0 0 2px rgba(61,142,240,.15);}
+.field textarea{resize:vertical;min-height:80px;line-height:1.6}
+.field select{cursor:pointer;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%234d5870'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 10px center;padding-right:30px;}
+
+/* DROP ZONE */
+.dz{border:2px dashed var(--line2);border-radius:var(--r);padding:28px 16px;text-align:center;cursor:pointer;position:relative;background:var(--bg0);transition:border-color .15s,background .15s;}
+.dz:hover,.dz.over{border-color:var(--accent);background:var(--accent-dim2);}
+.dz input[type=file]{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%;z-index:10;}
+.dz-btn{display:inline-flex;align-items:center;gap:6px;margin-top:12px;padding:7px 18px;background:var(--accent);border-radius:var(--r);font-size:12px;font-weight:500;color:#fff;pointer-events:none;}
+.dz-ico{width:36px;height:36px;background:var(--bg3);border:1px solid var(--line2);border-radius:8px;display:flex;align-items:center;justify-content:center;margin:0 auto 12px;}
+.dz-ico svg{width:18px;height:18px;fill:var(--text3)}
+.dz-m{font-size:12px;font-weight:500;color:var(--text2);margin-bottom:4px;}
+.dz-s{font-size:11px;color:var(--text3);font-family:var(--mono);}
+.dz-n{margin-top:8px;font-family:var(--mono);font-size:11px;color:var(--green);word-break:break-all;display:none;}
+.ipw{margin-top:12px;border:1px solid var(--line);border-radius:var(--r);overflow:hidden;display:none;background:var(--bg0);max-height:160px;}
+.ipw img{width:100%;max-height:160px;object-fit:contain;display:block;}
+
+/* BUTTONS */
+.btn{font-size:12px;font-weight:500;padding:8px 18px;border:none;border-radius:var(--r);cursor:pointer;display:inline-flex;align-items:center;gap:7px;transition:all .12s;white-space:nowrap;}
+.btn svg{width:13px;height:13px}
+.btn-p{background:var(--accent);color:#fff;}.btn-p:hover{background:#5aa3f5;}
+.btn-g{background:transparent;color:var(--text2);border:1px solid var(--line2);}.btn-g:hover{background:var(--bg3);color:var(--text);}
+.btn-d{background:var(--red);color:#fff;}.btn-d:hover{background:#f04f66;}
+.btn-a{background:var(--amber);color:#000;font-weight:600;}.btn-a:hover{background:#f5b535;}
+.btn-ok{background:var(--green);color:#000;font-weight:600;}.btn-ok:hover{background:#40d97a;}
+.btn-gold{background:var(--gold);color:#000;font-weight:600;}.btn-gold:hover{background:#e8b820;}
+.btn:disabled{opacity:.38;cursor:not-allowed;}
+.brow{display:flex;gap:8px;flex-wrap:wrap;margin-top:16px;}
+
+/* TOGGLE */
+.tog-row{display:flex;align-items:center;gap:10px;margin-bottom:12px;}
+.tog{width:38px;height:21px;background:var(--bg4);border:1px solid var(--line2);border-radius:11px;cursor:pointer;position:relative;flex-shrink:0;transition:background .15s,border-color .15s;}
+.tog.on{background:rgba(61,142,240,.25);border-color:var(--accent);}
+.tog::after{content:'';position:absolute;top:2px;left:2px;width:15px;height:15px;border-radius:50%;background:var(--text3);transition:left .15s,background .15s;}
+.tog.on::after{left:19px;background:var(--accent);}
+.tog-lbl{font-size:12px;color:var(--text2);}
+
+/* TERMINAL LOG */
+.term{background:var(--bg0);border:1px solid var(--line);border-radius:var(--r);padding:12px 14px;font-family:var(--mono);font-size:11px;line-height:2;max-height:200px;overflow-y:auto;margin-top:12px;}
+.term::-webkit-scrollbar{width:3px}.term::-webkit-scrollbar-thumb{background:var(--line2)}
+.lr{display:flex;gap:10px;}.lt{color:var(--text3);flex-shrink:0;}.li{color:var(--text2);}.lok{color:var(--green);}.lw{color:var(--amber);}.le{color:var(--red);}
+
+/* DOWNLOAD */
+.dl{display:none;align-items:center;justify-content:space-between;margin-top:12px;padding:10px 14px;background:var(--green-dim);border:1px solid rgba(46,201,107,.2);border-radius:var(--r);gap:10px;flex-wrap:wrap;}
+.dl.show{display:flex;}.dl-inf{font-family:var(--mono);font-size:11px;color:var(--green);}
+
+/* OUTPUT */
+.out{position:relative;background:var(--bg0);border:1px solid var(--line2);border-radius:var(--r);padding:12px 14px;font-family:var(--mono);font-size:12px;color:var(--green);min-height:60px;word-break:break-all;white-space:pre-wrap;line-height:1.7;margin-top:12px;}
+.out-lbl{position:absolute;top:-8px;left:10px;background:var(--bg1);padding:0 5px;font-size:9.5px;color:var(--text3);font-family:var(--mono);letter-spacing:.08em;text-transform:uppercase;}
+
+/* ERROR */
+.err-b{display:none;align-items:center;gap:10px;margin-top:12px;padding:10px 14px;background:var(--red-dim);border:1px solid rgba(224,60,85,.25);border-radius:var(--r);font-family:var(--mono);font-size:12px;color:var(--red);}
+.err-b.show{display:flex;}.err-b svg{width:14px;height:14px;flex-shrink:0;}
+
+/* STATS CARDS */
+.sc{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:16px;}
+.sc-card{background:var(--bg1);border:1px solid var(--line);border-radius:var(--r);padding:14px 16px;}
+.sc-v{font-family:var(--mono);font-size:24px;font-weight:500;letter-spacing:-.02em;}
+.sc-k{font-size:11px;color:var(--text3);margin-top:4px;}
+
+/* VOTER ID BADGE */
+.voter-badge{background:linear-gradient(135deg,var(--bg2),var(--bg3));border:1px solid var(--line2);border-radius:10px;padding:20px;margin-top:12px;position:relative;overflow:hidden;}
+.voter-badge::before{content:'';position:absolute;top:-30px;right:-30px;width:120px;height:120px;background:radial-gradient(circle,rgba(61,142,240,.08),transparent 70%);pointer-events:none;}
+.vb-header{display:flex;align-items:center;gap:12px;margin-bottom:16px;padding-bottom:14px;border-bottom:1px solid var(--line);}
+.vb-seal{width:46px;height:46px;background:linear-gradient(135deg,#1a5fb4,var(--accent));border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+.vb-seal svg{width:24px;height:24px;fill:#fff}
+.vb-title{font-family:var(--mono);font-size:13px;font-weight:500;color:var(--text);}
+.vb-sub{font-size:11px;color:var(--text3);margin-top:2px;font-family:var(--mono);}
+.vb-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+.vb-field{background:var(--bg0);border:1px solid var(--line);border-radius:4px;padding:10px 12px;}
+.vb-k{font-family:var(--mono);font-size:9.5px;color:var(--text3);letter-spacing:.08em;text-transform:uppercase;margin-bottom:4px;}
+.vb-v{font-family:var(--mono);font-size:12px;color:var(--text);font-weight:500;}
+.vb-id{grid-column:1/-1;background:var(--accent-dim);border-color:rgba(61,142,240,.25);}
+.vb-id .vb-v{color:var(--accent);font-size:14px;letter-spacing:.06em;}
+.steg-status{display:inline-flex;align-items:center;gap:6px;padding:3px 10px;border-radius:3px;font-family:var(--mono);font-size:10px;font-weight:500;background:var(--green-dim);color:var(--green);border:1px solid rgba(46,201,107,.25);margin-top:12px;}
+
+/* VERIFICATION RESULT */
+.ver-result{border-radius:var(--r);padding:16px;margin-top:12px;}
+.ver-ok{background:var(--green-dim);border:1px solid rgba(46,201,107,.2);}
+.ver-fail{background:var(--red-dim);border:1px solid rgba(224,60,85,.2);}
+.ver-title{font-family:var(--mono);font-size:13px;font-weight:500;margin-bottom:12px;}
+.ver-ok .ver-title{color:var(--green);}
+.ver-fail .ver-title{color:var(--red);}
+.ver-table{width:100%;border-collapse:collapse;}
+.ver-table td{padding:7px 10px;font-family:var(--mono);font-size:12px;border-bottom:1px solid var(--line);}
+.ver-table td:first-child{color:var(--text3);width:140px;}
+.ver-table td:last-child{color:var(--text);}
+.ver-table tr:last-child td{border-bottom:none}
+
+/* NOTE */
+.note{background:var(--amber-dim);border:1px solid rgba(240,160,32,.2);border-left:3px solid var(--amber);border-radius:var(--r);padding:10px 14px;font-size:12px;color:var(--amber);margin-bottom:14px;line-height:1.6;}
+.info-note{background:var(--accent-dim);border:1px solid rgba(61,142,240,.2);border-left:3px solid var(--accent);border-radius:var(--r);padding:10px 14px;font-size:12px;color:#8ab8f5;margin-bottom:14px;line-height:1.6;}
+
+/* STATUS BAR */
+.stbar{height:26px;background:var(--bg1);border-top:1px solid var(--line);display:flex;align-items:center;padding:0 16px;gap:22px;flex-shrink:0;}
+.st{display:flex;align-items:center;gap:7px;font-family:var(--mono);font-size:10px;color:var(--text3);}
+.st span{color:var(--text2);}
+
+/* TAB PAGES */
+#wc{display:none}
+.tp{display:none}.tp.active{display:block}
+
+/* INFO TABLE */
+.it{width:100%;border-collapse:collapse;}
+.it td{padding:9px 12px;font-size:12px;border-bottom:1px solid var(--line);vertical-align:top;}
+.it td:first-child{font-family:var(--mono);font-size:11px;color:var(--text3);width:150px;white-space:nowrap;}
+.it td:last-child{color:var(--text2);line-height:1.6;}
+.it tr:last-child td{border-bottom:none}
+
+/* DIVIDER */
+.section-div{height:1px;background:var(--line);margin:18px 0;}
+
+/* CANDIDATE SELECTION */
+.candidate-opt{border:2px solid var(--line2);border-radius:8px;padding:12px 8px;text-align:center;cursor:pointer;background:var(--bg0);transition:all .15s;}
+.candidate-opt:hover{border-color:var(--accent);background:var(--accent-dim2);}
+.candidate-opt.selected{border-color:var(--green);background:var(--green-dim);box-shadow:0 0 0 2px rgba(46,201,107,0.15);}
+.cand-letter{width:38px;height:38px;border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 8px;font-family:var(--mono);font-size:18px;font-weight:600;}
+.cand-name{font-size:12px;font-weight:600;color:var(--text);margin-bottom:2px;}
+.cand-party{font-size:10px;color:var(--text3);font-family:var(--mono);}
+
+/* FACE MATCH */
+.face-match-box{border-radius:var(--r);overflow:hidden;background:var(--bg2);border:1px solid var(--line2);}
+.face-match-row{display:grid;grid-template-columns:1fr auto 1fr;gap:12px;align-items:center;padding:14px;}
+.face-thumb{border-radius:6px;overflow:hidden;border:2px solid var(--line2);aspect-ratio:1;background:var(--bg3);}
+.face-thumb img{width:100%;height:100%;object-fit:cover;display:block;}
+.face-thumb canvas{width:100%;height:100%;display:block;}
+.face-vs{font-family:var(--mono);font-size:11px;color:var(--text3);text-align:center;}
+.face-score{text-align:center;padding:10px;border-top:1px solid var(--line);}
+.face-score-v{font-family:var(--mono);font-size:28px;font-weight:600;}
+.face-score-k{font-size:11px;color:var(--text3);margin-top:2px;}
+.match-ok .face-thumb{border-color:var(--green);}
+.match-fail .face-thumb{border-color:var(--red);}
+
+/* LIVENESS CHALLENGE */
+.liveness-bar{margin:10px 0 6px;background:var(--bg3);border-radius:20px;height:6px;overflow:hidden;}
+.liveness-fill{height:100%;border-radius:20px;background:var(--accent);transition:width .3s ease,background .3s;}
+.liveness-fill.done{background:var(--green);}
+.challenge-steps{display:flex;flex-direction:column;gap:6px;margin-top:8px;}
+.challenge-step{display:flex;align-items:center;gap:8px;font-family:var(--mono);font-size:11px;padding:7px 10px;border-radius:var(--r);background:var(--bg2);border:1px solid var(--line);transition:all .2s;}
+.challenge-step.active{border-color:var(--accent);background:var(--accent-dim);color:var(--text);}
+.challenge-step.done{border-color:rgba(46,201,107,.3);background:var(--green-dim);color:var(--green);}
+.challenge-step.pending{color:var(--text3);}
+.step-icon{width:20px;height:20px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;flex-shrink:0;border:1px solid currentColor;}
+.challenge-step.active .step-icon{background:var(--accent);color:#fff;border-color:var(--accent);animation:pulse-step .8s infinite;}
+.challenge-step.done .step-icon{background:var(--green);color:#000;border-color:var(--green);}
+@keyframes pulse-step{0%,100%{opacity:1}50%{opacity:.6}}
+
+/* LIVENESS CHALLENGE */
+.liveness-bar{margin:8px 0 4px;background:var(--bg3);border-radius:20px;height:5px;overflow:hidden;}
+.liveness-fill{height:100%;border-radius:20px;background:var(--accent);transition:width .4s ease,background .3s;}
+.liveness-fill.done{background:var(--green);}
+.challenge-steps{display:flex;flex-direction:column;gap:5px;margin-top:8px;}
+.cstep{display:flex;align-items:center;gap:8px;font-family:var(--mono);font-size:11px;padding:6px 10px;border-radius:var(--r);background:var(--bg2);border:1px solid var(--line);transition:all .2s;}
+.cstep.active{border-color:var(--accent);background:var(--accent-dim);color:var(--text);}
+.cstep.done{border-color:rgba(46,201,107,.3);background:var(--green-dim);color:var(--green);}
+.cstep.pending{color:var(--text3);}
+.cstep-ico{width:18px;height:18px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:10px;flex-shrink:0;border:1px solid currentColor;font-weight:600;}
+.cstep.active .cstep-ico{background:var(--accent);color:#fff;border-color:var(--accent);}
+.cstep.done .cstep-ico{background:var(--green);color:#000;border-color:var(--green);}
+
+/* ID VALIDATION */
+.id-valid-row{display:flex;align-items:center;gap:6px;margin-top:6px;font-family:var(--mono);font-size:11px;min-height:18px;}
+.id-tick{display:inline-flex;align-items:center;gap:5px;}
+.id-tick.ok{color:var(--green);}
+.id-tick.fail{color:var(--red);}
+.id-tick.checking{color:var(--text3);}
+.id-tick svg{width:14px;height:14px;flex-shrink:0;}
+.field input.valid{border-color:var(--green)!important;box-shadow:0 0 0 2px rgba(46,201,107,.12)!important;}
+.field input.invalid{border-color:var(--red)!important;box-shadow:0 0 0 2px rgba(224,60,85,.12)!important;}
+</style>
+</head>
+<body>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<canvas id="wc"></canvas>
+
+<!-- TOP BAR -->
+<div class="topbar">
+  <div class="brand">
+    <div class="brand-ico">
+      <svg viewBox="0 0 24 24"><path d="M12 2L4 6v6c0 5.5 3.8 10.7 8 12 4.2-1.3 8-6.5 8-12V6L12 2zm0 4l6 3v5c0 3.8-2.6 7.4-6 8.6C8.6 21.4 6 17.8 6 14V9l6-3zm-1 4v4H9l3 4 3-4h-2V10h-2z"/></svg>
+    </div>
+    <span class="brand-name">VoterVault</span><span class="brand-ver">v1.0</span>
+  </div>
+  <div class="tb-tabs">
+    <div class="ttab active" onclick="nav('register',this)">
+      <svg viewBox="0 0 16 16" fill="currentColor"><path d="M8 1a3 3 0 1 1 0 6 3 3 0 0 1 0-6zm0 7c3.3 0 6 1.3 6 3v1H2v-1c0-1.7 2.7-3 6-3z"/></svg>Register Voter
+    </div>
+    <div class="ttab" onclick="nav('verify',this)">
+      <svg viewBox="0 0 16 16" fill="currentColor"><path d="M2 8l4-4v3h8v2H6v3L2 8z"/></svg>Verify / Extract
+    </div>
+    <div class="ttab" onclick="nav('howit',this)">
+      <svg viewBox="0 0 16 16" fill="currentColor"><path d="M8 1a7 7 0 1 0 0 14A7 7 0 0 0 8 1zm-.5 3h1v1.5h-1V4zm0 3h1v5h-1V7z"/></svg>How It Works
+    </div>
+  </div>
+  <div class="tb-right"><div class="sdot"></div>SECURE · LOCAL ENGINE</div>
+</div>
+
+<!-- APP BODY -->
+<div class="app-body">
+
+  <!-- SIDEBAR -->
+  <div class="sidebar">
+    <div class="sb-lbl" style="margin-top:10px">Voter Operations</div>
+    <div class="sb-item active" onclick="navSb(this,'register')">
+      <svg viewBox="0 0 16 16" fill="currentColor"><path d="M8 1a3 3 0 1 1 0 6 3 3 0 0 1 0-6zm0 7c3.3 0 6 1.3 6 3v1H2v-1c0-1.7 2.7-3 6-3z"/></svg>Register Voter
+    </div>
+    <div class="sb-item" onclick="navSb(this,'verify')">
+      <svg viewBox="0 0 16 16" fill="currentColor"><path d="M2 8l4-4v3h8v2H6v3L2 8z"/></svg>Verify Identity
+    </div>
+    <div class="sb-div"></div>
+    <div class="sb-lbl">Security</div>
+    <div class="sb-item" onclick="navSb(this,'howit')">
+      <svg viewBox="0 0 16 16" fill="currentColor"><path d="M8 1a4 4 0 0 1 4 4v1h1a1 1 0 0 1 1 1v7a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h1V5a4 4 0 0 1 4-4zm0 8a1.5 1.5 0 1 0 0 3 1.5 1.5 0 0 0 0-3zm0-6a2 2 0 0 0-2 2v1h4V5a2 2 0 0 0-2-2z"/></svg>Security Spec
+    </div>
+    <div class="sb-div"></div>
+    <div class="sb-bot">
+      <div class="sb-item" style="cursor:default;font-size:11px;color:var(--text3)">
+        <svg viewBox="0 0 16 16" fill="currentColor"><path d="M8 1a7 7 0 1 0 0 14A7 7 0 0 0 8 1zm0 2a5 5 0 1 1 0 10A5 5 0 0 1 8 3z"/></svg>100% browser-local
+      </div>
+    </div>
+  </div>
+
+  <!-- CONTENT -->
+  <div class="content">
+
+    <!-- ===================== REGISTER TAB ===================== -->
+    <div id="p-register" class="tp active">
+      <div class="ph">
+        <div>
+          <div class="pt">Register Voter</div>
+          <div class="ps">Enter voter details · embed into image · secured with AES-256</div>
+        </div>
+        <div class="pa">
+          <button class="btn btn-g" onclick="resetReg()">
+            <svg viewBox="0 0 16 16" fill="currentColor"><path d="M2 8a6 6 0 1 1 1.17 3.59L4.6 10.14A4.5 4.5 0 1 0 3.5 8H5l-2.5 3L0 8h2z"/></svg>Reset
+          </button>
+          <button class="btn btn-p" onclick="runRegister()">
+            <svg viewBox="0 0 16 16" fill="currentColor"><path d="M8 1a4 4 0 0 1 4 4v1h1a1 1 0 0 1 1 1v7a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h1V5a4 4 0 0 1 4-4zm0 8a1.5 1.5 0 1 0 0 3 1.5 1.5 0 0 0 0-3zm0-6a2 2 0 0 0-2 2v1h4V5a2 2 0 0 0-2-2z"/></svg>Generate Secure Voter Card
+          </button>
+        </div>
+      </div>
+
+      <div class="g2">
+        <!-- LEFT: Voter Info Form -->
+        <div>
+          <div class="panel">
+            <div class="ph2"><div class="ptitle"><svg viewBox="0 0 16 16" fill="currentColor"><path d="M8 1a3 3 0 1 1 0 6 3 3 0 0 1 0-6zm0 7c3.3 0 6 1.3 6 3v1H2v-1c0-1.7 2.7-3 6-3z"/></svg>Voter Personal Details</div></div>
+            <div class="pb">
+              <div class="g2">
+                <div class="field">
+                  <label>Full Name <span class="req">*</span></label>
+                  <input type="text" id="v-name" placeholder="e.g. Arjun Krishnamurthy"/>
+                </div>
+                <div class="field">
+                  <label>Date of Birth <span class="req">*</span></label>
+                  <input type="date" id="v-dob"/>
+                </div>
+              </div>
+              <div class="g2">
+                <div class="field">
+                  <label>Gender <span class="req">*</span></label>
+                  <select id="v-gender">
+                    <option value="">— Select —</option>
+                    <option value="Male">Male</option>
+                    <option value="Female">Female</option>
+                    <option value="Transgender">Transgender</option>
+                    <option value="Other">Other</option>
+                  </select>
+                </div>
+                <div class="field">
+                  <label>Nationality <span class="req">*</span></label>
+                  <select id="v-nation">
+                    <option value="Indian">Indian</option>
+                    <option value="Other">Other</option>
+                  </select>
+                </div>
+              </div>
+              <div class="g2">
+                <div class="field">
+                  <label>Aadhaar ID <span class="req">*</span></label>
+                  <input type="text" id="v-id" placeholder="e.g. 4821-7392-1845" maxlength="20" oninput="validateIDs()"/>
+                  <div class="id-valid-row"><div class="id-tick" id="tick-aadhaar"></div></div>
+                </div>
+                <div class="field">
+                  <label>PAN ID <span class="req">*</span></label>
+                  <input type="text" id="v-pan" placeholder="e.g. QWERT1234Z" maxlength="10" style="text-transform:uppercase" oninput="this.value=this.value.toUpperCase();validateIDs()"/>
+                  <div class="id-valid-row"><div class="id-tick" id="tick-pan"></div></div>
+                </div>
+              </div>
+              <div id="id-crosscheck" style="display:none;margin-top:-6px;margin-bottom:8px;padding:8px 12px;border-radius:var(--r);font-family:var(--mono);font-size:11px;"></div>
+              <div class="field">
+                <label>Constituency / District <span class="req">*</span></label>
+                <input type="text" id="v-const" placeholder="e.g. Chennai North"/>
+              </div>
+              <div class="field">
+                <label>Address</label>
+                <textarea id="v-addr" placeholder="Residential address..."></textarea>
+              </div>
+              <div class="section-div"></div>
+              <div class="field">
+                <label>Vote for Candidate <span class="req">*</span></label>
+                <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-top:6px;">
+                  <div class="candidate-opt" id="cand-A" onclick="selectCandidate('A')">
+                    <div class="cand-letter" style="background:rgba(61,142,240,0.15);color:var(--accent)">A</div>
+                    <div class="cand-name">Candidate A</div>
+                    <div class="cand-party">Party Alpha</div>
+                  </div>
+                  <div class="candidate-opt" id="cand-B" onclick="selectCandidate('B')">
+                    <div class="cand-letter" style="background:rgba(46,201,107,0.15);color:var(--green)">B</div>
+                    <div class="cand-name">Candidate B</div>
+                    <div class="cand-party">Party Beta</div>
+                  </div>
+                  <div class="candidate-opt" id="cand-C" onclick="selectCandidate('C')">
+                    <div class="cand-letter" style="background:rgba(240,160,32,0.15);color:var(--amber)">C</div>
+                    <div class="cand-name">Candidate C</div>
+                    <div class="cand-party">Party Gamma</div>
+                  </div>
+                </div>
+                <div id="cand-chosen" style="display:none;margin-top:8px;font-family:var(--mono);font-size:11px;color:var(--green);">✓ Vote recorded</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- RIGHT: Webcam + Security -->
+        <div>
+          <div class="panel">
+            <div class="ph2">
+              <div class="ptitle"><svg viewBox="0 0 16 16" fill="currentColor"><path d="M8 1a3 3 0 1 1 0 6 3 3 0 0 1 0-6zm0 7c3.3 0 6 1.3 6 3v1H2v-1c0-1.7 2.7-3 6-3z"/></svg>Live Voter Photo Capture</div>
+              <div id="face-status" style="font-family:var(--mono);font-size:10px;color:var(--text3)">CAMERA OFF</div>
+            </div>
+            <div class="pb">
+              <!-- Mode toggle -->
+              <div style="display:flex;gap:8px;margin-bottom:12px;">
+                <button class="btn btn-p" id="btn-cam" onclick="startCam()" style="flex:1">
+                  <svg viewBox="0 0 16 16" fill="currentColor"><path d="M2 4a1 1 0 0 0-1 1v6a1 1 0 0 0 1 1h8a1 1 0 0 0 1-1v-2l3 2V5l-3 2V5a1 1 0 0 0-1-1H2z"/></svg>Open Camera
+                </button>
+                <button class="btn btn-g" onclick="triggerFile('fi-photo')" style="flex:1">
+                  <svg viewBox="0 0 16 16" fill="currentColor"><path d="M2 2h5v5H2zm7 0h5v5H9zm-7 7h5v5H2zm7 0h5v5H9z"/></svg>Upload Instead
+                </button>
+                <input type="file" id="fi-photo" accept="image/png,image/jpeg,image/bmp,image/webp" onchange="onPhotoUpload(this)" style="display:none"/>
+              </div>
+
+              <!-- Webcam view -->
+              <div id="cam-wrap" style="display:none;">
+                <div style="position:relative;border-radius:var(--r);overflow:hidden;background:#000;aspect-ratio:4/3;">
+                  <video id="cam-video" autoplay playsinline muted style="width:100%;height:100%;object-fit:cover;display:block;"></video>
+                  <canvas id="cam-overlay" style="position:absolute;inset:0;width:100%;height:100%;pointer-events:none;"></canvas>
+                  <div id="face-badge" style="position:absolute;top:10px;left:10px;padding:4px 10px;border-radius:20px;font-family:var(--mono);font-size:10px;font-weight:500;background:rgba(0,0,0,0.75);color:var(--text3);border:1px solid rgba(255,255,255,.12);">Initializing…</div>
+                  <div style="position:absolute;bottom:10px;left:50%;transform:translateX(-50%);">
+                    <button class="btn btn-ok" id="btn-capture" onclick="capturePhoto()" disabled style="padding:8px 22px;font-size:12px;">
+                      <svg viewBox="0 0 16 16" fill="currentColor"><rect x="1" y="2" width="14" height="12" rx="1"/></svg>Capture Photo
+                    </button>
+                  </div>
+                </div>
+                <div id="liveness-panel" style="margin-top:10px;padding:10px 12px;background:var(--bg2);border:1px solid var(--line);border-radius:var(--r);">
+                  <div style="display:flex;align-items:center;justify-content:space-between;">
+                    <span style="font-family:var(--mono);font-size:9.5px;color:var(--text3);letter-spacing:.1em;text-transform:uppercase;">Liveness Challenge</span>
+                    <span id="liveness-pct" style="font-family:var(--mono);font-size:10px;color:var(--accent);">0 / 3</span>
+                  </div>
+                  <div class="liveness-bar"><div class="liveness-fill" id="liveness-fill" style="width:0%"></div></div>
+                  <div class="challenge-steps">
+                    <div class="cstep pending" id="cstep-1"><div class="cstep-ico">1</div><span id="cstep-1-txt">Center your face in the frame</span></div>
+                    <div class="cstep pending" id="cstep-2"><div class="cstep-ico">2</div><span id="cstep-2-txt">Blink your eyes slowly</span></div>
+                    <div class="cstep pending" id="cstep-3"><div class="cstep-ico">3</div><span id="cstep-3-txt">Turn your head left or right</span></div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Captured preview -->
+              <div id="cam-preview-wrap" style="display:none;margin-top:10px;">
+                <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
+                  <span style="font-family:var(--mono);font-size:11px;color:var(--green);">✓ Photo captured</span>
+                  <button class="btn btn-g" onclick="retakePhoto()" style="padding:5px 12px;font-size:11px;">Retake</button>
+                </div>
+                <img id="cam-snap" src="" style="width:100%;border-radius:var(--r);border:1px solid var(--line2);display:block;"/>
+              </div>
+
+              <!-- Upload preview -->
+              <div class="ipw" id="pw-photo"><img id="pi-photo" src="" alt="Voter Photo"/></div>
+
+              <div id="photo-hint" style="margin-top:10px;font-family:var(--mono);font-size:11px;color:var(--text3);text-align:center;">No photo yet — open camera or upload a file</div>
+            </div>
+          </div>
+
+          <div class="panel">
+            <div class="ph2"><div class="ptitle"><svg viewBox="0 0 16 16" fill="currentColor"><path d="M8 1a4 4 0 0 1 4 4v1h1a1 1 0 0 1 1 1v7a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h1V5a4 4 0 0 1 4-4zm0 8a1.5 1.5 0 1 0 0 3 1.5 1.5 0 0 0 0-3zm0-6a2 2 0 0 0-2 2v1h4V5a2 2 0 0 0-2-2z"/></svg>AES-256 Encryption</div></div>
+            <div class="pb">
+              <div class="tog-row">
+                <div class="tog on" id="enc-tog" onclick="togEncReg()"></div>
+                <span class="tog-lbl">AES-256-CBC + PBKDF2 Encryption</span>
+              </div>
+              <div id="enc-pw-box">
+                <div class="field">
+                  <label>Encryption Password <span class="req">*</span></label>
+                  <input type="password" id="reg-pass" placeholder="Min 8 characters — keep this safe!"/>
+                </div>
+                <div class="field">
+                  <label>Confirm Password</label>
+                  <input type="password" id="reg-pass2" placeholder="Re-enter password"/>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Output Panel -->
+      <div class="panel" id="reg-out-panel" style="display:none">
+        <div class="ph2"><div class="ptitle">Registration Output</div></div>
+        <div class="pb">
+          <div class="term" id="reg-log"></div>
+          <div id="reg-badge-wrap"></div>
+          <div class="dl" id="reg-dl">
+            <div class="dl-inf" id="reg-dl-i">—</div>
+            <button class="btn btn-ok" onclick="dlReg()">
+              <svg viewBox="0 0 16 16" fill="currentColor"><path d="M8 12l-5-5 1.41-1.41L7 9.17V1h2v8.17l2.59-2.58L13 7l-5 5zM2 14h12v2H2v-2z"/></svg>Download Voter Card Image
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===================== VERIFY TAB ===================== -->
+    <div id="p-verify" class="tp">
+      <div class="ph">
+        <div>
+          <div class="pt">Verify Voter Identity</div>
+          <div class="ps">Upload voter card · scan live face · compare against stored photo</div>
+        </div>
+        <div class="pa">
+          <button class="btn btn-g" onclick="resetVer()">
+            <svg viewBox="0 0 16 16" fill="currentColor"><path d="M2 8a6 6 0 1 1 1.17 3.59L4.6 10.14A4.5 4.5 0 1 0 3.5 8H5l-2.5 3L0 8h2z"/></svg>Reset
+          </button>
+          <button class="btn btn-a" onclick="runVerify()">
+            <svg viewBox="0 0 16 16" fill="currentColor"><path d="M6.5 1a5.5 5.5 0 0 1 4.383 8.823l3.896 3.9-1.414 1.414-3.9-3.896A5.5 5.5 0 1 1 6.5 1zm0 2a3.5 3.5 0 1 0 0 7 3.5 3.5 0 0 0 0-7z"/></svg>Extract &amp; Verify
+          </button>
+        </div>
+      </div>
+
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px;">
+        <!-- Col 1: Card upload -->
+        <div>
+          <div class="panel">
+            <div class="ph2"><div class="ptitle">Step 1 · Voter Card</div></div>
+            <div class="pb">
+              <div class="dz">
+                <input type="file" id="fi-ver" accept="image/png,image/jpeg,image/bmp,image/webp" onchange="onVerUpload(this)"/>
+                <div class="dz-ico"><svg viewBox="0 0 24 24"><path d="M21 19V5c0-1.1-.9-2-2-2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2zM8.5 13.5l2.5 3.01L14.5 12l4.5 6H5l3.5-4.5z"/></svg></div>
+                <div class="dz-m">Drop voter card PNG</div>
+                <div class="dz-s">Issued by VoterVault</div>
+                <div class="dz-btn" onclick="event.stopPropagation();triggerFile('fi-ver')">📁 Browse</div>
+                <div class="dz-n" id="fn-ver"></div>
+              </div>
+              <div class="ipw" id="pw-ver"><img id="pi-ver" src="" alt=""/></div>
+            </div>
+          </div>
+          <div class="panel">
+            <div class="ph2"><div class="ptitle">Decryption</div></div>
+            <div class="pb">
+              <div class="tog-row">
+                <div class="tog on" id="ver-tog" onclick="togVerDec()"></div>
+                <span class="tog-lbl">AES-256-CBC</span>
+              </div>
+              <div id="ver-pw-box">
+                <div class="field">
+                  <label>Password</label>
+                  <input type="password" id="ver-pass" placeholder="Registration password"/>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Col 2: Live webcam scan -->
+        <div>
+          <div class="panel" style="height:100%">
+            <div class="ph2">
+              <div class="ptitle">Step 2 · Live Face Scan</div>
+              <div id="ver-face-status" style="font-family:var(--mono);font-size:10px;color:var(--text3)">OFF</div>
+            </div>
+            <div class="pb">
+              <button class="btn btn-p" id="btn-ver-cam" onclick="startVerCam()" style="width:100%;margin-bottom:10px;">
+                <svg viewBox="0 0 16 16" fill="currentColor"><path d="M2 4a1 1 0 0 0-1 1v6a1 1 0 0 0 1 1h8a1 1 0 0 0 1-1v-2l3 2V5l-3 2V5a1 1 0 0 0-1-1H2z"/></svg>Open Camera for Face Scan
+              </button>
+              <div id="ver-cam-wrap" style="display:none;position:relative;border-radius:var(--r);overflow:hidden;background:#000;aspect-ratio:4/3;">
+                <video id="ver-cam-video" autoplay playsinline muted style="width:100%;height:100%;object-fit:cover;display:block;"></video>
+                <canvas id="ver-cam-overlay" style="position:absolute;inset:0;width:100%;height:100%;pointer-events:none;"></canvas>
+                <div id="ver-face-badge" style="position:absolute;top:8px;left:8px;padding:3px 9px;border-radius:20px;font-family:var(--mono);font-size:10px;background:rgba(0,0,0,0.75);color:var(--text3);border:1px solid var(--line2);">Initializing…</div>
+              </div>
+              <div id="ver-cam-preview" style="display:none;margin-top:8px;">
+                <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;">
+                  <span style="font-family:var(--mono);font-size:11px;color:var(--green);">✓ Face captured</span>
+                  <button class="btn btn-g" onclick="retakeVerFace()" style="padding:4px 10px;font-size:11px;">Retake</button>
+                </div>
+                <img id="ver-face-snap" src="" style="width:100%;border-radius:var(--r);border:1px solid var(--line2);"/>
+              </div>
+              <div id="ver-cam-btn-wrap" style="display:none;margin-top:8px;text-align:center;">
+                <button class="btn btn-ok" id="btn-ver-capture" onclick="captureVerFace()" disabled style="width:100%;">
+                  <svg viewBox="0 0 16 16" fill="currentColor"><rect x="1" y="2" width="14" height="12" rx="1"/></svg>Capture for Comparison
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Col 3: Face match result -->
+        <div>
+          <div class="panel" style="height:100%">
+            <div class="ph2"><div class="ptitle">Step 3 · Face Match</div></div>
+            <div class="pb">
+              <div id="face-match-placeholder" style="text-align:center;padding:40px 0;font-family:var(--mono);font-size:11px;color:var(--text3);">
+                Complete steps 1 &amp; 2<br/>then click Verify
+              </div>
+              <div id="face-match-result" style="display:none;">
+                <div class="face-match-box" id="face-match-box">
+                  <div class="face-match-row">
+                    <div>
+                      <div style="font-family:var(--mono);font-size:9px;color:var(--text3);text-align:center;margin-bottom:6px;letter-spacing:.08em;">CARD PHOTO</div>
+                      <div class="face-thumb" id="face-thumb-stored"><img id="face-img-stored" src="" alt=""/></div>
+                    </div>
+                    <div class="face-vs">VS</div>
+                    <div>
+                      <div style="font-family:var(--mono);font-size:9px;color:var(--text3);text-align:center;margin-bottom:6px;letter-spacing:.08em;">LIVE SCAN</div>
+                      <div class="face-thumb" id="face-thumb-live"><img id="face-img-live" src="" alt=""/></div>
+                    </div>
+                  </div>
+                  <div class="face-score">
+                    <div class="face-score-v" id="face-score-val">—</div>
+                    <div class="face-score-k">Similarity Score</div>
+                    <div id="face-verdict" style="margin-top:8px;font-family:var(--mono);font-size:11px;font-weight:600;"></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="panel" id="ver-out-panel" style="display:none">
+        <div class="ph2"><div class="ptitle">Verification Result</div></div>
+        <div class="pb">
+          <div class="term" id="ver-log"></div>
+          <div id="ver-result-wrap"></div>
+          <div class="err-b" id="ver-err">
+            <svg viewBox="0 0 16 16" fill="currentColor"><path d="M8 1a7 7 0 1 0 0 14A7 7 0 0 0 8 1zm-.5 3.5h1V9h-1V4.5zm0 5.5h1v1.5h-1V10z"/></svg>
+            <span id="ver-err-m"></span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===================== HOW IT WORKS TAB ===================== -->
+    <div id="p-howit" class="tp">
+      <div class="ph">
+        <div><div class="pt">How VoterVault Works</div><div class="ps">Security architecture & technical specification</div></div>
+      </div>
+
+      <div class="g2">
+        <div>
+          <div class="panel">
+            <div class="ph2"><div class="ptitle">Registration Flow</div></div>
+            <div class="pb">
+              <table class="it">
+                <tr><td>Step 1</td><td>Voter enters personal details: name, DOB, gender, ID, constituency.</td></tr>
+                <tr><td>Step 2</td><td>Details are serialized to JSON and encoded as UTF-8 bytes.</td></tr>
+                <tr><td>Step 3</td><td>Payload is encrypted with AES-256-CBC using a user-defined password via PBKDF2 key derivation.</td></tr>
+                <tr><td>Step 4</td><td>Encrypted bytes are hidden in the carrier image using LSB (Least Significant Bit) steganography — 1 bit per RGB channel.</td></tr>
+                <tr><td>Step 5</td><td>The resulting PNG looks identical to the original photo but carries the hidden voter data inside.</td></tr>
+              </table>
+            </div>
+          </div>
+          <div class="panel">
+            <div class="ph2"><div class="ptitle">Encryption Specification</div></div>
+            <div class="pb">
+              <table class="it">
+                <tr><td>Algorithm</td><td>AES-256-CBC via Web Crypto API</td></tr>
+                <tr><td>Key Derivation</td><td>PBKDF2-SHA256 · 100,000 iterations · 32-byte key</td></tr>
+                <tr><td>Salt / IV</td><td>16 bytes each, cryptographically random per session</td></tr>
+                <tr><td>Wire Format</td><td>[4B magic 0xDEADBEEF][16B salt][16B IV][ciphertext]</td></tr>
+                <tr><td>Header</td><td>[4B payload length][1B marker 0xAA] at LSB bit offset 0</td></tr>
+              </table>
+            </div>
+          </div>
+        </div>
+        <div>
+          <div class="panel">
+            <div class="ph2"><div class="ptitle">LSB Steganography</div></div>
+            <div class="pb">
+              <table class="it">
+                <tr><td>Method</td><td>Least Significant Bit substitution in RGB pixel channels.</td></tr>
+                <tr><td>Capacity</td><td>3 bits per pixel (1 per R, G, B channel).</td></tr>
+                <tr><td>Carrier</td><td>Any PNG / JPG / BMP / WEBP image uploaded by the user.</td></tr>
+                <tr><td>Visibility</td><td>Completely invisible to the human eye. No perceptible change.</td></tr>
+                <tr><td>Best Practice</td><td>Use PNG. JPG lossy compression will destroy embedded data.</td></tr>
+              </table>
+            </div>
+          </div>
+          <div class="panel">
+            <div class="ph2"><div class="ptitle">Privacy & Security</div></div>
+            <div class="pb">
+              <table class="it">
+                <tr><td>Processing</td><td>100% client-side in the browser. No data is ever sent to a server.</td></tr>
+                <tr><td>Storage</td><td>No cookies, no localStorage, no telemetry of any kind.</td></tr>
+                <tr><td>Password</td><td>Password never leaves the browser. Never stored anywhere.</td></tr>
+                <tr><td>Voter ID</td><td>Auto-generated unique ID per registration (random + timestamp).</td></tr>
+                <tr><td>Tamper</td><td>Any image manipulation destroys the embedded data, acting as tamper detection.</td></tr>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- end content -->
+</div><!-- end app-body -->
+
+<div class="stbar">
+  <div class="st">Engine <span>Web Crypto API</span></div>
+  <div class="st">Steg Method <span>Image LSB</span></div>
+  <div class="st">Encryption <span id="sb-e">AES-256-CBC</span></div>
+  <div class="st">Network <span style="color:var(--green)">Isolated · Local Only</span></div><div class="st">Database <span id="sb-status" style="color:var(--text3)">Not configured</span></div>
+</div>
+
+<script>
+
+// ─── SUPABASE CONFIG ─────────────────────────────────────
+// Replace these with your actual Supabase project values:
+// Dashboard → Settings → API
+const SB_URL  = 'https://evtxhuzelicjfjdivbry.supabase.co';   // e.g. https://xyzxyz.supabase.co
+const SB_KEY  = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImV2dHhodXplbGljamZqZGl2YnJ5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM3ODM2NDUsImV4cCI6MjA4OTM1OTY0NX0.feijww0nzjzHcuZNaPhL0y7X2kfNHFZslfV7dlzQmuU'; // public anon key
+
+let sbClient = null;
+function getSB() {
+  if (!sbClient) {
+    if (SB_URL === 'YOUR_SUPABASE_URL') return null;
+    sbClient = supabase.createClient(SB_URL, SB_KEY);
+  }
+  return sbClient;
+}
+
+async function sbSaveVoter(voterData, faceThumbB64) {
+  const sb = getSB();
+  if (!sb) { console.warn('Supabase not configured — running locally only.'); return null; }
+  try {
+    const { data, error } = await sb.from('voters').insert([{
+      voter_id:      voterData.voterID,
+      full_name:     voterData.name,
+      dob:           voterData.dob,
+      gender:        voterData.gender,
+      nationality:   voterData.nationality,
+      aadhaar_id:    voterData.nationalID,
+      pan_id:        voterData.panID,
+      constituency:  voterData.constituency,
+      address:       voterData.address,
+      candidate_vote: voterData.vote,
+      registered_on: voterData.registeredOn,
+      face_thumb:    faceThumbB64 || null,
+    }]);
+    if (error) throw error;
+    return data;
+  } catch(e) {
+    console.error('Supabase save failed:', e.message);
+    return null;
+  }
+}
+
+async function sbLogAudit(voterID, action, result, detail) {
+  const sb = getSB();
+  if (!sb) return;
+  try {
+    await sb.from('audit_log').insert([{
+      voter_id: voterID,
+      action,
+      result,
+      detail,
+      timestamp: new Date().toISOString(),
+    }]);
+  } catch(e) { console.warn('Audit log failed:', e); }
+}
+
+// ─── VOTER DATASET ───────────────────────────────────────
+const VOTER_DB = [
+  // ── Original 34 ──
+  {name:"Rahul Sharma",    pan:"QWERT1234Z", aadhaar:"4821-7392-1845"},
+  {name:"Priya Verma",     pan:"ASDFG5678K", aadhaar:"5932-1847-6621"},
+  {name:"Amit Kumar",      pan:"ZXCVB9012L", aadhaar:"7742-6621-9384"},
+  {name:"Sneha Iyer",      pan:"POIUY3456M", aadhaar:"6621-8834-1927"},
+  {name:"Arjun Reddy",     pan:"LKJHG7890P", aadhaar:"9182-7734-5512"},
+  {name:"Neha Singh",      pan:"MNBVC2345Q", aadhaar:"1834-6621-7743"},
+  {name:"Vikram Patel",    pan:"HGFDS6789R", aadhaar:"6621-1112-9934"},
+  {name:"Anjali Mehta",    pan:"NBVCX0123S", aadhaar:"5512-8843-2201"},
+  {name:"Karan Malhotra",  pan:"PLMOK4567T", aadhaar:"7734-2201-8843"},
+  {name:"Divya Nair",      pan:"QAZWS7891U", aadhaar:"6621-8834-1192"},
+  {name:"Rohit Gupta",     pan:"WSXED2348V", aadhaar:"3345-6621-9901"},
+  {name:"Pooja Das",       pan:"EDCRF5679W", aadhaar:"8834-7712-5532"},
+  {name:"Suresh Babu",     pan:"RFVTG8901X", aadhaar:"1927-6621-7734"},
+  {name:"Kavya Nair",      pan:"TGBYH3452Y", aadhaar:"8843-9921-6621"},
+  {name:"Manish Yadav",    pan:"YHNJU6783Z", aadhaar:"7734-6621-8834"},
+  {name:"Deepak Singh",    pan:"UJMKI9014A", aadhaar:"6621-5512-3345"},
+  {name:"Meera Pillai",    pan:"IKOLP2345B", aadhaar:"8834-2201-7712"},
+  {name:"Sanjay Verma",    pan:"OLPKM5676C", aadhaar:"6621-7734-5512"},
+  {name:"Nisha Kapoor",    pan:"PLMNB8907D", aadhaar:"1192-6621-8843"},
+  {name:"Ravi Shankar",    pan:"MNBVC3458E", aadhaar:"6621-9901-7734"},
+  {name:"Ankit Jain",      pan:"QWERT6789F", aadhaar:"5512-6621-2201"},
+  {name:"Shalini Roy",     pan:"ASDFG0123G", aadhaar:"8834-7712-6621"},
+  {name:"Gaurav Mishra",   pan:"ZXCVB4567H", aadhaar:"7734-8834-6621"},
+  {name:"Ritika Sen",      pan:"POIUY8901I", aadhaar:"2201-6621-7712"},
+  {name:"Harish Kumar",    pan:"LKJHG2345J", aadhaar:"6621-5512-8834"},
+  {name:"Sunita Reddy",    pan:"MNBVC6789K", aadhaar:"7712-6621-3345"},
+  {name:"Ajay Nair",       pan:"HGFDS0123L", aadhaar:"8834-7734-6621"},
+  {name:"Lakshmi Iyer",    pan:"NBVCX4567M", aadhaar:"6621-2201-7712"},
+  {name:"Varun Gupta",     pan:"PLMOK8901N", aadhaar:"7734-6621-8834"},
+  {name:"Preeti Sharma",   pan:"QAZWS2345O", aadhaar:"5512-6621-9901"},
+  {name:"Nitin Jain",      pan:"WSXED6789P", aadhaar:"6621-7712-8834"},
+  {name:"Asha Verma",      pan:"EDCRF0123Q", aadhaar:"8834-6621-2201"},
+  {name:"Mohit Yadav",     pan:"RFVTG4567R", aadhaar:"7712-6621-7734"},
+  {name:"Rekha Das",       pan:"TGBYH8901S", aadhaar:"6621-3345-8834"},
+  // ── New 90 ──
+  {name:"Aditya Sharma",   pan:"TRWQX1234A", aadhaar:"9012-3456-7781"},
+  {name:"Riya Menon",      pan:"PLKJD2345B", aadhaar:"8123-4567-8892"},
+  {name:"Kunal Verma",     pan:"ZXMNB3456C", aadhaar:"7234-5678-9903"},
+  {name:"Isha Kapoor",     pan:"ASDWE4567D", aadhaar:"6345-6789-1014"},
+  {name:"Rahul Nair",      pan:"QPLMN5678E", aadhaar:"5456-7890-2125"},
+  {name:"Sneha Gupta",     pan:"POIUH6789F", aadhaar:"4567-8901-3236"},
+  {name:"Arnav Singh",     pan:"MNBVC7890G", aadhaar:"3678-9012-4347"},
+  {name:"Pallavi Iyer",    pan:"LKJHG8901H", aadhaar:"2789-0123-5458"},
+  {name:"Yash Jain",       pan:"HYTRE9012J", aadhaar:"1890-1234-6569"},
+  {name:"Simran Das",      pan:"GFDSA0123K", aadhaar:"0901-2345-7670"},
+  {name:"Harsh Mehta",     pan:"BNMKL1234L", aadhaar:"9012-3456-8781"},
+  {name:"Ananya Roy",      pan:"VCXZQ2345M", aadhaar:"8123-4567-9892"},
+  {name:"Rakesh Kumar",    pan:"TYUIO3456N", aadhaar:"7234-5678-0903"},
+  {name:"Neel Patel",      pan:"WERAS4567P", aadhaar:"6345-6789-1114"},
+  {name:"Tanya Sinha",     pan:"DFGHJ5678Q", aadhaar:"5456-7890-2225"},
+  {name:"Pranav Shah",     pan:"ZXCAS6789R", aadhaar:"4567-8901-3336"},
+  {name:"Divyansh Gupta",  pan:"PLMKO7890S", aadhaar:"3678-9012-4447"},
+  {name:"Kritika Nair",    pan:"QWERT8901T", aadhaar:"2789-0123-5558"},
+  {name:"Sahil Arora",     pan:"ASDFG9012U", aadhaar:"1890-1234-6669"},
+  {name:"Nandini Iyer",    pan:"ZXCVM0123V", aadhaar:"0901-2345-7770"},
+  {name:"Rohan Pillai",    pan:"POIKJ1234W", aadhaar:"9012-3456-8881"},
+  {name:"Megha Verma",     pan:"MLPOI2345X", aadhaar:"8123-4567-9992"},
+  {name:"Akash Singh",     pan:"NBGVF3456Y", aadhaar:"7234-5678-1003"},
+  {name:"Shruti Das",      pan:"ZAQWS4567Z", aadhaar:"6345-6789-2114"},
+  {name:"Vivek Sharma",    pan:"XSWED5678A", aadhaar:"5456-7890-3225"},
+  {name:"Kavita Jain",     pan:"CDEFR6789B", aadhaar:"4567-8901-4336"},
+  {name:"Aman Kapoor",     pan:"RFVGT7890C", aadhaar:"3678-9012-5447"},
+  {name:"Neha Arora",      pan:"TGBHY8901D", aadhaar:"2789-0123-6558"},
+  {name:"Sanjana Mehta",   pan:"YHNUJ9012E", aadhaar:"1890-1234-7669"},
+  {name:"Rajat Sinha",     pan:"UJMKI0123F", aadhaar:"0901-2345-8770"},
+  {name:"Deepika Roy",     pan:"IKOLP1234G", aadhaar:"9012-3456-9881"},
+  {name:"Tarun Verma",     pan:"OLPKJ2345H", aadhaar:"8123-4567-0992"},
+  {name:"Shivam Patel",    pan:"PLMNB3456J", aadhaar:"7234-5678-1103"},
+  {name:"Irfan Ali",       pan:"NBVFG4567K", aadhaar:"6345-6789-2214"},
+  {name:"Zaid Khan",       pan:"ZAQPL5678L", aadhaar:"5456-7890-3325"},
+  {name:"Farhan Sheikh",   pan:"XSWED6789M", aadhaar:"4567-8901-4436"},
+  {name:"Ayesha Khan",     pan:"CDEFR7890N", aadhaar:"3678-9012-5547"},
+  {name:"Imran Shaikh",    pan:"RFVGT8901P", aadhaar:"2789-0123-6658"},
+  {name:"Sameer Qureshi",  pan:"TGBHY9012Q", aadhaar:"1890-1234-7769"},
+  {name:"Nazia Begum",     pan:"YHNUJ0123R", aadhaar:"0901-2345-8870"},
+  {name:"Sonia Chopra",    pan:"UJMKI1234S", aadhaar:"9012-3456-9981"},
+  {name:"Ritika Malhotra", pan:"IKOLP2345T", aadhaar:"8123-4567-1092"},
+  {name:"Karan Oberoi",    pan:"OLPKJ3456U", aadhaar:"7234-5678-2103"},
+  {name:"Arjun Khanna",    pan:"PLMNB4567V", aadhaar:"6345-6789-3214"},
+  {name:"Puneet Bansal",   pan:"NBVFG5678W", aadhaar:"5456-7890-4325"},
+  {name:"Rohini Seth",     pan:"ZAQPL6789X", aadhaar:"4567-8901-5436"},
+  {name:"Sakshi Grover",   pan:"XSWED7890Y", aadhaar:"3678-9012-6547"},
+  {name:"Nitin Bajaj",     pan:"CDEFR8901Z", aadhaar:"2789-0123-7658"},
+  {name:"Alok Tandon",     pan:"RFVGT9012A", aadhaar:"1890-1234-8769"},
+  {name:"Geeta Kapoor",    pan:"TGBHY0123B", aadhaar:"0901-2345-9870"},
+  {name:"Bhavesh Shah",    pan:"YHNUJ1234C", aadhaar:"9012-3456-1981"},
+  {name:"Jignesh Patel",   pan:"UJMKI2345D", aadhaar:"8123-4567-2092"},
+  {name:"Kishore Rao",     pan:"IKOLP3456E", aadhaar:"7234-5678-3103"},
+  {name:"Madhuri Dixit",   pan:"OLPKJ4567F", aadhaar:"6345-6789-4214"},
+  {name:"Vasant Joshi",    pan:"PLMNB5678G", aadhaar:"5456-7890-5325"},
+  {name:"Ramesh Kulkarni", pan:"NBVFG6789H", aadhaar:"4567-8901-6436"},
+  {name:"Sudhir Naik",     pan:"ZAQPL7890J", aadhaar:"3678-9012-7547"},
+  {name:"Ganesh Iyer",     pan:"XSWED8901K", aadhaar:"2789-0123-8658"},
+  {name:"Sridhar Reddy",   pan:"CDEFR9012L", aadhaar:"1890-1234-9769"},
+  {name:"Mahesh Bhat",     pan:"RFVGT0123M", aadhaar:"0901-2345-0870"},
+  {name:"Chirag Doshi",    pan:"TGBHY1234N", aadhaar:"9012-3456-2981"},
+  {name:"Hiral Shah",      pan:"YHNUJ2345P", aadhaar:"8123-4567-3092"},
+  {name:"Kishan Solanki",  pan:"UJMKI3456Q", aadhaar:"7234-5678-4103"},
+  {name:"Mehul Vora",      pan:"IKOLP4567R", aadhaar:"6345-6789-5214"},
+  {name:"Tejas Patel",     pan:"OLPKJ5678S", aadhaar:"5456-7890-6325"},
+  {name:"Dinesh Chauhan",  pan:"PLMNB6789T", aadhaar:"4567-8901-7436"},
+  {name:"Kishore Gupta",   pan:"NBVFG7890U", aadhaar:"3678-9012-8547"},
+  {name:"Brijesh Yadav",   pan:"ZAQPL8901V", aadhaar:"2789-0123-9658"},
+  {name:"Santosh Mishra",  pan:"XSWED9012W", aadhaar:"1890-1234-0769"},
+  {name:"Raghav Pandey",   pan:"CDEFR0123X", aadhaar:"0901-2345-1870"},
+  {name:"Piyush Tiwari",   pan:"RFVGT1234Y", aadhaar:"9012-3456-3981"},
+  {name:"Umesh Dubey",     pan:"TGBHY2345Z", aadhaar:"8123-4567-4092"},
+  {name:"Shubham Jaiswal", pan:"YHNUJ3456A", aadhaar:"7234-5678-5103"},
+  {name:"Abhay Srivastava",pan:"UJMKI4567B", aadhaar:"6345-6789-6214"},
+  {name:"Anurag Saxena",   pan:"IKOLP5678C", aadhaar:"5456-7890-7325"},
+  {name:"Vikas Tripathi",  pan:"OLPKJ6789D", aadhaar:"4567-8901-8436"},
+  {name:"Pradeep Shukla",  pan:"PLMNB7890E", aadhaar:"3678-9012-9547"},
+  {name:"Hemant Chaturvedi",pan:"NBVFG8901F",aadhaar:"2789-0123-0658"},
+  {name:"Naveen Purohit",  pan:"ZAQPL9012G", aadhaar:"1890-1234-1769"},
+  {name:"Lokesh Saini",    pan:"XSWED0123H", aadhaar:"0901-2345-2870"},
+  {name:"Mukesh Soni",     pan:"CDEFR1234J", aadhaar:"9012-3456-4981"},
+  {name:"Rohit Sahu",      pan:"RFVGT2345K", aadhaar:"8123-4567-5092"},
+  {name:"Vijay Thakur",    pan:"TGBHY3456L", aadhaar:"7234-5678-6103"},
+  {name:"Suraj Chauhan",   pan:"YHNUJ4567M", aadhaar:"6345-6789-7214"},
+  {name:"Devendra Rathore",pan:"UJMKI5678N", aadhaar:"5456-7890-8325"},
+  {name:"Omprakash Meena", pan:"IKOLP6789P", aadhaar:"4567-8901-9436"},
+  {name:"Mahavir Gurjar",  pan:"OLPKJ7890Q", aadhaar:"3678-9012-0547"},
+  {name:"Rajendra Solanki",pan:"PLMNB8901R", aadhaar:"2789-0123-1658"},
+  {name:"Suresh Choudhary",pan:"NBVFG9012S", aadhaar:"1890-1234-2769"},
+  {name:"Narendra Pawar",  pan:"ZAQPL0123T", aadhaar:"0901-2345-3870"},
+];
+
+// ─── ONE-TIME VOTE LOCK (localStorage) ──────────────────
+function getUsedIDs() {
+  try { return JSON.parse(localStorage.getItem('vv_used_ids') || '{}'); } catch(e) { return {}; }
+}
+function markIDUsed(aadhaar, pan, voterID) {
+  const used = getUsedIDs();
+  used[aadhaar] = voterID;
+  used[pan]     = voterID;
+  localStorage.setItem('vv_used_ids', JSON.stringify(used));
+}
+function isIDUsed(id) {
+  return getUsedIDs()[id] || null;
+}
+
+// ─── ID VALIDATION ────────────────────────────────────────
+function validateIDs() {
+  const aadhaar = document.getElementById('v-id').value.trim();
+  const pan = document.getElementById('v-pan').value.trim().toUpperCase();
+  const tickA = document.getElementById('tick-aadhaar');
+  const tickP = document.getElementById('tick-pan');
+  const cross = document.getElementById('id-crosscheck');
+  const inpA = document.getElementById('v-id');
+  const inpP = document.getElementById('v-pan');
+
+  // Clear state
+  tickA.innerHTML = ''; tickP.innerHTML = ''; cross.style.display = 'none';
+  inpA.className = ''; inpP.className = '';
+
+  const aadhaarMatch = aadhaar ? VOTER_DB.find(r => r.aadhaar === aadhaar) : null;
+  const panMatch     = pan     ? VOTER_DB.find(r => r.pan === pan)         : null;
+
+  // Check one-time lock
+  const aadhaarUsed = aadhaar ? isIDUsed(aadhaar) : null;
+  const panUsed     = pan     ? isIDUsed(pan)     : null;
+
+  // Aadhaar tick
+  if (aadhaar) {
+    if (aadhaarUsed) {
+      tickA.innerHTML = svgCross() + ' Already registered · Voter ID: ' + aadhaarUsed;
+      tickA.className = 'id-tick fail';
+      inpA.classList.add('invalid');
+    } else if (aadhaarMatch) {
+      tickA.innerHTML = svgTick() + ' Verified · ' + aadhaarMatch.name;
+      tickA.className = 'id-tick ok';
+      inpA.classList.add('valid');
+    } else {
+      tickA.innerHTML = svgCross() + ' Not found in electoral roll';
+      tickA.className = 'id-tick fail';
+      inpA.classList.add('invalid');
+    }
+  }
+
+  // PAN tick
+  if (pan) {
+    if (panUsed) {
+      tickP.innerHTML = svgCross() + ' Already registered · Voter ID: ' + panUsed;
+      tickP.className = 'id-tick fail';
+      inpP.classList.add('invalid');
+    } else if (panMatch) {
+      tickP.innerHTML = svgTick() + ' Verified · ' + panMatch.name;
+      tickP.className = 'id-tick ok';
+      inpP.classList.add('valid');
+    } else {
+      tickP.innerHTML = svgCross() + ' Not found in electoral roll';
+      tickP.className = 'id-tick fail';
+      inpP.classList.add('invalid');
+    }
+  }
+
+  // Cross-check: both entered — do they belong to same person?
+  if (aadhaar && pan && aadhaarMatch && panMatch) {
+    if (aadhaarMatch.name === panMatch.name) {
+      cross.style.display = 'block';
+      cross.style.background = 'var(--green-dim)';
+      cross.style.border = '1px solid rgba(46,201,107,.25)';
+      cross.style.color = 'var(--green)';
+      cross.innerHTML = svgTick() + ' &nbsp;Aadhaar &amp; PAN belong to the same registered voter: <strong>' + aadhaarMatch.name + '</strong>';
+      // Auto-fill name if empty
+      const nameField = document.getElementById('v-name');
+      if (!nameField.value.trim()) nameField.value = aadhaarMatch.name;
+    } else {
+      cross.style.display = 'block';
+      cross.style.background = 'var(--red-dim)';
+      cross.style.border = '1px solid rgba(224,60,85,.25)';
+      cross.style.color = 'var(--red)';
+      cross.innerHTML = svgCross() + ' &nbsp;Aadhaar and PAN belong to <strong>different people</strong> — possible identity mismatch!';
+    }
+  }
+}
+
+function svgTick() {
+  return '<svg viewBox="0 0 16 16" fill="none" style="width:13px;height:13px;flex-shrink:0;display:inline-block;vertical-align:middle;margin-right:3px"><circle cx="8" cy="8" r="7" fill="currentColor" opacity=".18"/><path d="M4.5 8.5l2.5 2.5 4.5-5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+}
+function svgCross() {
+  return '<svg viewBox="0 0 16 16" fill="none" style="width:13px;height:13px;flex-shrink:0;display:inline-block;vertical-align:middle;margin-right:3px"><circle cx="8" cy="8" r="7" fill="currentColor" opacity=".18"/><path d="M5.5 5.5l5 5M10.5 5.5l-5 5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>';
+}
+
+// ─── FACE THUMBNAIL RESIZE ────────────────────────────────
+function resizeFaceThumb(dataURL, size) {
+  const c = document.createElement('canvas');
+  c.width = size; c.height = size;
+  const ctx = c.getContext('2d');
+  const img = new Image(); img.src = dataURL;
+  ctx.drawImage(img, 0, 0, size, size);
+  return c.toDataURL('image/jpeg', 0.6); // compact jpeg
+}
+
+// ─── VERIFY WEBCAM ────────────────────────────────────────
+let verCamStream = null, verFaceLoop = null, verFaceDetector = null;
+
+async function startVerCam() {
+  try {
+    document.getElementById('ver-cam-wrap').style.display = 'block';
+    document.getElementById('ver-cam-btn-wrap').style.display = 'block';
+    document.getElementById('btn-ver-cam').disabled = true;
+    setVerFaceBadge('Starting camera…', 'neutral');
+
+    verCamStream = await navigator.mediaDevices.getUserMedia({ video: { width:640, height:480, facingMode:'user' }, audio:false });
+    const video = document.getElementById('ver-cam-video');
+    video.srcObject = verCamStream;
+    await new Promise(r => video.onloadedmetadata = r);
+
+    if ('FaceDetector' in window) {
+      verFaceDetector = new FaceDetector({ fastMode: true, maxDetectedFaces: 1 });
+      startVerFaceLoop();
+    } else {
+      drawVerGuide();
+      setVerFaceBadge('Position face in frame', 'ok');
+      document.getElementById('btn-ver-capture').disabled = false;
+    }
+    document.getElementById('ver-face-status').textContent = 'LIVE';
+    document.getElementById('ver-face-status').style.color = 'var(--green)';
+  } catch(e) {
+    setVerFaceBadge('Camera error: ' + e.message, 'err');
+    document.getElementById('btn-ver-cam').disabled = false;
+  }
+}
+
+function startVerFaceLoop() {
+  const video = document.getElementById('ver-cam-video');
+  const overlay = document.getElementById('ver-cam-overlay');
+  const ctx = overlay.getContext('2d');
+  async function tick() {
+    if (!verCamStream) return;
+    overlay.width = video.videoWidth || 640; overlay.height = video.videoHeight || 480;
+    ctx.clearRect(0, 0, overlay.width, overlay.height);
+    try {
+      const faces = await verFaceDetector.detect(video);
+      if (faces.length > 0) {
+        const f = faces[0].boundingBox;
+        ctx.strokeStyle = '#3d8ef0'; ctx.lineWidth = 2.5; ctx.shadowColor = '#3d8ef0'; ctx.shadowBlur = 8;
+        ctx.strokeRect(f.x, f.y, f.width, f.height); ctx.shadowBlur = 0;
+        const ok = f.width > overlay.width * 0.15;
+        setVerFaceBadge(ok ? '✓ Face detected — ready to capture' : 'Move closer', ok ? 'ok' : 'warn');
+        document.getElementById('btn-ver-capture').disabled = !ok;
+      } else {
+        drawVerGuide(ctx, overlay.width, overlay.height);
+        setVerFaceBadge('No face — look at camera', 'warn');
+        document.getElementById('btn-ver-capture').disabled = true;
+      }
+    } catch(e) { drawVerGuide(ctx, overlay.width, overlay.height); }
+    verFaceLoop = requestAnimationFrame(tick);
+  }
+  tick();
+}
+
+function drawVerGuide(ctx, w, h) {
+  if (!ctx) {
+    const ov = document.getElementById('ver-cam-overlay');
+    const v = document.getElementById('ver-cam-video');
+    ov.width = v.videoWidth||640; ov.height = v.videoHeight||480;
+    ctx = ov.getContext('2d'); ctx.clearRect(0,0,ov.width,ov.height);
+    w = ov.width; h = ov.height;
+  }
+  ctx.strokeStyle = 'rgba(61,142,240,0.5)'; ctx.lineWidth = 2; ctx.setLineDash([5,4]);
+  ctx.beginPath(); ctx.ellipse(w/2, h/2, w*0.22, h*0.35, 0, 0, Math.PI*2); ctx.stroke();
+  ctx.setLineDash([]);
+}
+
+function setVerFaceBadge(msg, type) {
+  const b = document.getElementById('ver-face-badge'); if (!b) return;
+  b.textContent = msg;
+  b.style.color = type==='ok'?'var(--green)':type==='warn'?'var(--amber)':type==='err'?'var(--red)':'var(--text2)';
+}
+
+function captureVerFace() {
+  const video = document.getElementById('ver-cam-video');
+  const snap = document.createElement('canvas');
+  snap.width = video.videoWidth; snap.height = video.videoHeight;
+  snap.getContext('2d').drawImage(video, 0, 0);
+  S.verFaceURL = snap.toDataURL('image/png');
+  document.getElementById('ver-face-snap').src = S.verFaceURL;
+  document.getElementById('ver-cam-preview').style.display = 'block';
+  document.getElementById('ver-cam-wrap').style.display = 'none';
+  document.getElementById('ver-cam-btn-wrap').style.display = 'none';
+  stopVerCam();
+  document.getElementById('ver-face-status').textContent = 'CAPTURED';
+}
+
+function retakeVerFace() {
+  S.verFaceURL = null;
+  document.getElementById('ver-cam-preview').style.display = 'none';
+  document.getElementById('btn-ver-cam').disabled = false;
+  document.getElementById('ver-face-status').textContent = 'OFF';
+  document.getElementById('ver-face-status').style.color = 'var(--text3)';
+}
+
+function stopVerCam() {
+  if (verFaceLoop) { cancelAnimationFrame(verFaceLoop); verFaceLoop = null; }
+  if (verCamStream) { verCamStream.getTracks().forEach(t => t.stop()); verCamStream = null; }
+}
+
+// ─── FACE SIMILARITY COMPARISON ───────────────────────────
+// Compares two images by downsampling to 16x16 and computing histogram similarity
+function compareFaces(url1, url2) {
+  return new Promise(res => {
+    const SIZE = 16;
+    function getPixels(url, cb) {
+      const img = new Image(); img.crossOrigin = 'anonymous';
+      img.onload = () => {
+        const c = document.createElement('canvas'); c.width = SIZE; c.height = SIZE;
+        c.getContext('2d').drawImage(img, 0, 0, SIZE, SIZE);
+        cb(c.getContext('2d').getImageData(0,0,SIZE,SIZE).data);
+      };
+      img.src = url;
+    }
+    getPixels(url1, px1 => {
+      getPixels(url2, px2 => {
+        // Compare grayscale histograms
+        let diff = 0, total = SIZE * SIZE;
+        for (let i = 0; i < px1.length; i += 4) {
+          const g1 = (px1[i]*0.299 + px1[i+1]*0.587 + px1[i+2]*0.114);
+          const g2 = (px2[i]*0.299 + px2[i+1]*0.587 + px2[i+2]*0.114);
+          diff += Math.abs(g1 - g2);
+        }
+        const avgDiff = diff / total;
+        // avgDiff 0 = identical, 255 = opposite. Score 0-100
+        const score = Math.max(0, Math.round(100 - (avgDiff / 255) * 100));
+        res(score);
+      });
+    });
+  });
+}
+
+// ─── WEBCAM & FACE DETECTION ─────────────────────────────
+let camStream = null, faceLoop = null, faceDetector = null, faceOK = false;
+
+async function startCam() {
+  try {
+    document.getElementById('cam-wrap').style.display = 'block';
+    document.getElementById('cam-preview-wrap').style.display = 'none';
+    document.getElementById('photo-hint').style.display = 'none';
+    document.getElementById('btn-cam').disabled = true;
+    document.getElementById('btn-cam').textContent = 'Camera On';
+    setFaceBadge('Starting camera…', 'neutral');
+
+    camStream = await navigator.mediaDevices.getUserMedia({ video: { width:640, height:480, facingMode:'user' }, audio:false });
+    const video = document.getElementById('cam-video');
+    video.srcObject = camStream;
+    await new Promise(r => video.onloadedmetadata = r);
+
+    resetLiveness();
+    // Try native FaceDetector API
+    if ('FaceDetector' in window) {
+      faceDetector = new FaceDetector({ fastMode: true, maxDetectedFaces: 1 });
+      setFaceBadge('Center your face to begin…', 'neutral');
+      startFaceLoop();
+    } else {
+      // Fallback: no FaceDetector — simplified 3-step timer challenge
+      drawGuideOval();
+      setFaceBadge('Position face in frame', 'neutral');
+      runFallbackChallenge();
+    }
+    document.getElementById('face-status').textContent = 'CAMERA ON';
+    document.getElementById('face-status').style.color = 'var(--green)';
+  } catch(e) {
+    setFaceBadge('Camera error: ' + e.message, 'err');
+    document.getElementById('btn-cam').disabled = false;
+  }
+}
+
+// ─── LIVENESS STATE ──────────────────────────────────────
+const LS = {
+  centered: false, blinkDone: false, turnDone: false,
+  prevFaceW: null, prevCX: null,
+  blinkHistory: [], // eye-area ratio history
+  turnHistory: [], // cx ratio history
+  blinkCooldown: 0,
+  turnCooldown: 0
+};
+
+function livenessStep(n) {
+  // n=1 center, n=2 blink, n=3 turn
+  const el = document.getElementById('cstep-' + n);
+  if (!el || el.classList.contains('done')) return;
+  const steps = [null, 'LS.centered', 'LS.blinkDone', 'LS.turnDone'];
+  el.classList.remove('pending', 'active');
+  el.classList.add('done');
+  el.querySelector('.cstep-ico').textContent = '✓';
+  updateLivenessBar();
+}
+
+function setStepActive(n) {
+  ['1','2','3'].forEach(i => {
+    const el = document.getElementById('cstep-' + i);
+    if (el && !el.classList.contains('done')) {
+      el.classList.remove('active', 'pending');
+      el.classList.add(i == n ? 'active' : 'pending');
+    }
+  });
+}
+
+function updateLivenessBar() {
+  const done = [LS.centered, LS.blinkDone, LS.turnDone].filter(Boolean).length;
+  const pct = Math.round((done / 3) * 100);
+  const fill = document.getElementById('liveness-fill');
+  fill.style.width = pct + '%';
+  if (done === 3) fill.classList.add('done');
+  document.getElementById('liveness-pct').textContent = done + ' / 3';
+  return done;
+}
+
+function resetLiveness() {
+  LS.centered = false; LS.blinkDone = false; LS.turnDone = false;
+  LS.prevFaceW = null; LS.prevCX = null;
+  LS.blinkHistory = []; LS.turnHistory = [];
+  LS.blinkCooldown = 0; LS.turnCooldown = 0;
+  ['1','2','3'].forEach(i => {
+    const el = document.getElementById('cstep-' + i);
+    if (el) { el.className = 'cstep pending'; el.querySelector('.cstep-ico').textContent = i; }
+  });
+  const fill = document.getElementById('liveness-fill');
+  if (fill) { fill.style.width = '0%'; fill.classList.remove('done'); }
+  const pct = document.getElementById('liveness-pct');
+  if (pct) pct.textContent = '0 / 3';
+}
+
+function startFaceLoop() {
+  const video = document.getElementById('cam-video');
+  const overlay = document.getElementById('cam-overlay');
+  const ctx = overlay.getContext('2d');
+  resetLiveness();
+  setStepActive(1);
+
+  async function tick() {
+    if (!camStream) return;
+    overlay.width = video.videoWidth || 640;
+    overlay.height = video.videoHeight || 480;
+    ctx.clearRect(0, 0, overlay.width, overlay.height);
+    LS.blinkCooldown = Math.max(0, LS.blinkCooldown - 1);
+    LS.turnCooldown = Math.max(0, LS.turnCooldown - 1);
+
+    try {
+      const faces = await faceDetector.detect(video);
+      if (faces.length > 0) {
+        const f = faces[0].boundingBox;
+        const vw = overlay.width, vh = overlay.height;
+        const cx = (f.x + f.width / 2) / vw;
+        const cy = (f.y + f.height / 2) / vh;
+        const relW = f.width / vw;
+
+        // Pick colour based on liveness progress
+        const allDone = LS.centered && LS.blinkDone && LS.turnDone;
+        const color = allDone ? '#2ec96b' : (LS.centered ? '#f0a020' : '#3d8ef0');
+        drawCorners(ctx, f.x, f.y, f.width, f.height, color);
+
+        // ── STEP 1: CENTERED ──
+        if (!LS.centered) {
+          const ok = cx > 0.3 && cx < 0.7 && cy > 0.25 && cy < 0.75 && relW > 0.18;
+          if (ok) {
+            LS.centered = true;
+            livenessStep(1);
+            setStepActive(2);
+            setFaceBadge('✓ Centered — now blink slowly', 'ok');
+          } else {
+            setFaceBadge('Center your face in the oval', 'warn');
+          }
+          drawGuideOval(ctx, vw, vh);
+
+        // ── STEP 2: BLINK ──
+        } else if (!LS.blinkDone && LS.blinkCooldown === 0) {
+          // Estimate eye-open ratio by sampling pixel brightness in eye zone
+          // Grab a horizontal strip at ~35% height of face (eye level)
+          const eyeY = Math.round(f.y + f.height * 0.35);
+          const eyeX = Math.round(f.x + f.width * 0.15);
+          const eyeW = Math.round(f.width * 0.7);
+          const eyeH = Math.max(4, Math.round(f.height * 0.12));
+          let strip;
+          try { strip = ctx.getImageData(eyeX, eyeY, eyeW, eyeH); } catch(e) { strip = null; }
+
+          let eyeRatio = 1;
+          if (strip) {
+            // Dark pixels (closed eyes) vs bright
+            let dark = 0;
+            for (let i = 0; i < strip.data.length; i += 4) {
+              const lum = strip.data[i]*0.3 + strip.data[i+1]*0.59 + strip.data[i+2]*0.11;
+              if (lum < 60) dark++;
+            }
+            eyeRatio = dark / (strip.data.length / 4);
+          }
+          LS.blinkHistory.push(eyeRatio);
+          if (LS.blinkHistory.length > 30) LS.blinkHistory.shift();
+
+          // A blink = ratio spikes then drops. Detect a high-then-low pattern
+          if (LS.blinkHistory.length >= 10) {
+            const recent = LS.blinkHistory.slice(-10);
+            const peak = Math.max(...recent);
+            const valley = Math.min(...recent.slice(-4));
+            if (peak > 0.18 && valley < peak * 0.5) {
+              LS.blinkDone = true;
+              LS.blinkCooldown = 30;
+              livenessStep(2);
+              setStepActive(3);
+              setFaceBadge('✓ Blink detected — now turn your head', 'ok');
+            } else {
+              setFaceBadge('Blink your eyes slowly…', 'warn');
+            }
+          }
+
+        // ── STEP 3: HEAD TURN ──
+        } else if (!LS.turnDone && LS.turnCooldown === 0) {
+          LS.turnHistory.push(cx);
+          if (LS.turnHistory.length > 40) LS.turnHistory.shift();
+
+          if (LS.turnHistory.length >= 20) {
+            const maxCX = Math.max(...LS.turnHistory);
+            const minCX = Math.min(...LS.turnHistory);
+            const range = maxCX - minCX;
+            if (range > 0.12) { // significant horizontal movement
+              LS.turnDone = true;
+              LS.turnCooldown = 30;
+              livenessStep(3);
+              const total = updateLivenessBar();
+              setFaceBadge('✓ Liveness confirmed! You may capture.', 'ok');
+              document.getElementById('btn-capture').disabled = false;
+              faceOK = true;
+            } else {
+              setFaceBadge('Turn your head left or right slowly…', 'warn');
+            }
+          }
+
+        } else if (LS.centered && LS.blinkDone && LS.turnDone) {
+          setFaceBadge('✓ All checks passed — capture when ready', 'ok');
+          document.getElementById('btn-capture').disabled = false;
+          faceOK = true;
+        }
+
+        // Store previous face position
+        LS.prevCX = cx;
+        LS.prevFaceW = relW;
+
+      } else {
+        drawGuideOval(ctx, overlay.width, overlay.height);
+        setFaceBadge('No face detected — look at camera', 'warn');
+        faceOK = false;
+        if (!LS.centered) setStepActive(1);
+        document.getElementById('btn-capture').disabled = true;
+      }
+    } catch(e) {
+      drawGuideOval(ctx, overlay.width, overlay.height);
+    }
+    faceLoop = requestAnimationFrame(tick);
+  }
+  tick();
+}
+
+function drawCorners(ctx, x, y, w, h, color) {
+  const len = Math.min(w, h) * 0.18;
+  ctx.strokeStyle = color; ctx.lineWidth = 2.5; ctx.shadowBlur = 0; ctx.setLineDash([]);
+  [[x,y,1,1],[x+w,y,-1,1],[x,y+h,1,-1],[x+w,y+h,-1,-1]].forEach(([px,py,dx,dy]) => {
+    ctx.beginPath(); ctx.moveTo(px+dx*len, py); ctx.lineTo(px, py); ctx.lineTo(px, py+dy*len); ctx.stroke();
+  });
+}
+
+function drawGuideOval(ctx, w, h) {
+  if (!ctx) {
+    const overlay = document.getElementById('cam-overlay');
+    const video = document.getElementById('cam-video');
+    overlay.width = video.videoWidth || 640; overlay.height = video.videoHeight || 480;
+    ctx = overlay.getContext('2d'); ctx.clearRect(0, 0, overlay.width, overlay.height);
+    w = overlay.width; h = overlay.height;
+  }
+  ctx.strokeStyle = 'rgba(61,142,240,0.55)'; ctx.lineWidth = 2; ctx.setLineDash([6,4]);
+  ctx.beginPath(); ctx.ellipse(w/2, h/2, w*0.22, h*0.35, 0, 0, Math.PI*2); ctx.stroke();
+  ctx.setLineDash([]);
+  ctx.fillStyle = 'rgba(61,142,240,0.06)';
+  ctx.beginPath(); ctx.ellipse(w/2, h/2, w*0.22, h*0.35, 0, 0, Math.PI*2); ctx.fill();
+}
+
+function setFaceBadge(msg, type) {
+  const b = document.getElementById('face-badge'); if (!b) return;
+  b.textContent = msg;
+  b.style.color = type==='ok' ? '#2ec96b' : type==='warn' ? '#f0a020' : type==='err' ? '#e03c55' : '#9aa0b4';
+  b.style.borderColor = type==='ok' ? 'rgba(46,201,107,.35)' : type==='warn' ? 'rgba(240,160,32,.35)' : type==='err' ? 'rgba(224,60,85,.35)' : 'rgba(255,255,255,.1)';
+}
+
+function capturePhoto() {
+  if (!faceOK && !LS.turnDone) { setFaceBadge('Complete liveness challenge first', 'err'); return; }
+  const video = document.getElementById('cam-video');
+  const snap = document.createElement('canvas');
+  snap.width = video.videoWidth; snap.height = video.videoHeight;
+  snap.getContext('2d').drawImage(video, 0, 0);
+  S.photoURL = snap.toDataURL('image/png');
+  document.getElementById('cam-snap').src = S.photoURL;
+  document.getElementById('cam-preview-wrap').style.display = 'block';
+  document.getElementById('cam-wrap').style.display = 'none';
+  document.getElementById('photo-hint').style.display = 'none';
+  stopCam();
+  document.getElementById('face-status').textContent = 'CAPTURED';
+  document.getElementById('face-status').style.color = 'var(--green)';
+}
+
+function retakePhoto() {
+  S.photoURL = null; faceOK = false;
+  resetLiveness();
+  document.getElementById('cam-preview-wrap').style.display = 'none';
+  document.getElementById('btn-capture').disabled = true;
+  document.getElementById('btn-cam').disabled = false;
+  document.getElementById('btn-cam').innerHTML = `<svg viewBox="0 0 16 16" fill="currentColor"><path d="M2 4a1 1 0 0 0-1 1v6a1 1 0 0 0 1 1h8a1 1 0 0 0 1-1v-2l3 2V5l-3 2V5a1 1 0 0 0-1-1H2z"/></svg>Open Camera`;
+  document.getElementById('face-status').textContent = 'CAMERA OFF';
+  document.getElementById('face-status').style.color = 'var(--text3)';
+  document.getElementById('photo-hint').style.display = 'block';
+}
+
+function stopCam() {
+  if (faceLoop) { cancelAnimationFrame(faceLoop); faceLoop = null; }
+  if (camStream) { camStream.getTracks().forEach(t => t.stop()); camStream = null; }
+}
+
+// ─── FALLBACK LIVENESS (no FaceDetector API) ─────────────
+function runFallbackChallenge() {
+  // Step 1: center (immediate — they can see themselves)
+  setStepActive(1);
+  setTimeout(() => {
+    LS.centered = true; livenessStep(1); setStepActive(2);
+    setFaceBadge('Now blink your eyes slowly…', 'warn');
+    // Step 2: blink — honour system, 2.5s wait
+    setTimeout(() => {
+      LS.blinkDone = true; livenessStep(2); setStepActive(3);
+      setFaceBadge('Now turn your head left or right…', 'warn');
+      // Step 3: turn — 2.5s wait
+      setTimeout(() => {
+        LS.turnDone = true; livenessStep(3); updateLivenessBar();
+        setFaceBadge('✓ Liveness confirmed! Capture when ready.', 'ok');
+        faceOK = true;
+        document.getElementById('btn-capture').disabled = false;
+      }, 2500);
+    }, 2500);
+  }, 1000);
+}
+
+// ─── MANUAL BROWSE FALLBACK ───────────────────────────────
+function triggerFile(id) { document.getElementById(id).click(); }
+
+// ─── STATE ───────────────────────────────────────────────
+const S = {
+  photoURL: null, photoFile: null,
+  verURL: null,
+  encOn: true, verDecOn: true,
+  regResult: null,
+  selectedCandidate: null,
+  verFaceURL: null
+};
+
+// ─── CANDIDATE SELECTION ─────────────────────────────────
+function selectCandidate(c) {
+  S.selectedCandidate = c;
+  ['A','B','C'].forEach(x => document.getElementById('cand-'+x).classList.toggle('selected', x===c));
+  document.getElementById('cand-chosen').style.display = 'block';
+  document.getElementById('cand-chosen').textContent = `✓ Vote cast for Candidate ${c}`;
+}
+
+// ─── NAVIGATION ──────────────────────────────────────────
+function nav(n, el) {
+  document.querySelectorAll('.sb-item').forEach(i => i.classList.remove('active'));
+  document.querySelectorAll('.ttab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.tp').forEach(p => p.classList.remove('active'));
+  if (el) el.classList.add('active');
+  const tt = document.querySelector(`.ttab[onclick*="'${n}'"]`);
+  if (tt) tt.classList.add('active');
+  const sb = document.querySelector(`.sb-item[onclick*="'${n}'"]`);
+  if (sb) sb.classList.add('active');
+  document.getElementById('p-' + n).classList.add('active');
+}
+function navSb(el, n) { nav(n, null); el.classList.add('active'); document.querySelectorAll('.ttab').forEach(t => { if (t.getAttribute('onclick') && t.getAttribute('onclick').includes("'" + n + "'")) t.classList.add('active'); }); }
+
+// ─── TOGGLE ──────────────────────────────────────────────
+function togEncReg() {
+  S.encOn = !S.encOn;
+  document.getElementById('enc-tog').classList.toggle('on', S.encOn);
+  document.getElementById('enc-pw-box').style.display = S.encOn ? 'block' : 'none';
+  document.getElementById('sb-e').textContent = S.encOn ? 'AES-256-CBC' : 'Disabled';
+}
+function togVerDec() {
+  S.verDecOn = !S.verDecOn;
+  document.getElementById('ver-tog').classList.toggle('on', S.verDecOn);
+  document.getElementById('ver-pw-box').style.display = S.verDecOn ? 'block' : 'none';
+}
+
+// ─── FILE UPLOADS ─────────────────────────────────────────
+function onPhotoUpload(inp) {
+  const f = inp.files[0]; if (!f) return;
+  S.photoFile = f;
+  const el = document.getElementById('fn-photo');
+  el.textContent = '✓ ' + f.name + ' (' + fb(f.size) + ')';
+  el.style.display = 'block';
+  const r = new FileReader();
+  r.onload = e => {
+    S.photoURL = e.target.result;
+    document.getElementById('pi-photo').src = e.target.result;
+    document.getElementById('pw-photo').style.display = 'block';
+  };
+  r.readAsDataURL(f);
+}
+function onVerUpload(inp) {
+  const f = inp.files[0]; if (!f) return;
+  const el = document.getElementById('fn-ver');
+  el.textContent = '✓ ' + f.name; el.style.display = 'block';
+  const r = new FileReader();
+  r.onload = e => {
+    S.verURL = e.target.result;
+    document.getElementById('pi-ver').src = e.target.result;
+    document.getElementById('pw-ver').style.display = 'block';
+  };
+  r.readAsDataURL(f);
+}
+
+// ─── CRYPTO ──────────────────────────────────────────────
+async function dk(pw, salt) {
+  const b = await crypto.subtle.importKey('raw', new TextEncoder().encode(pw), 'PBKDF2', false, ['deriveKey']);
+  return crypto.subtle.deriveKey({ name: 'PBKDF2', salt, iterations: 100000, hash: 'SHA-256' }, b, { name: 'AES-CBC', length: 256 }, false, ['encrypt', 'decrypt']);
+}
+async function aE(data, pw) {
+  const salt = crypto.getRandomValues(new Uint8Array(16)), iv = crypto.getRandomValues(new Uint8Array(16));
+  const key = await dk(pw, salt), ct = await crypto.subtle.encrypt({ name: 'AES-CBC', iv }, key, data);
+  const out = new Uint8Array(4 + 16 + 16 + ct.byteLength);
+  out.set([0xDE, 0xAD, 0xBE, 0xEF]); out.set(salt, 4); out.set(iv, 20); out.set(new Uint8Array(ct), 36);
+  return out;
+}
+async function aD(data, pw) {
+  if (data[0] !== 0xDE || data[1] !== 0xAD || data[2] !== 0xBE || data[3] !== 0xEF)
+    throw new Error('Decryption failed — wrong password or data not encrypted');
+  const key = await dk(pw, data.slice(4, 20));
+  const pt = await crypto.subtle.decrypt({ name: 'AES-CBC', iv: data.slice(20, 36) }, key, data.slice(36));
+  return new Uint8Array(pt);
+}
+
+// ─── IMAGE LSB ENCODE ─────────────────────────────────────
+function iEnc(url, pay) {
+  return new Promise((res, rej) => {
+    const img = new Image();
+    img.onload = () => {
+      const c = document.getElementById('wc');
+      c.width = img.width; c.height = img.height;
+      const ctx = c.getContext('2d'); ctx.drawImage(img, 0, 0);
+      const imd = ctx.getImageData(0, 0, c.width, c.height), px = imd.data;
+      const n = pay.length, h = new Uint8Array(5);
+      h[0] = (n >> 24) & 0xFF; h[1] = (n >> 16) & 0xFF; h[2] = (n >> 8) & 0xFF; h[3] = n & 0xFF; h[4] = 0xAA;
+      const full = new Uint8Array(5 + n); full.set(h); full.set(pay, 5);
+      if (full.length * 8 > Math.floor((px.length / 4) * 3))
+        return rej(new Error('Payload too large for this image. Use a larger photo.'));
+      let bi = 0;
+      for (let i = 0; i < full.length; i++)
+        for (let b = 7; b >= 0; b--) {
+          const v = (full[i] >> b) & 1, ch = bi % 3, ps = Math.floor(bi / 3) * 4;
+          px[ps + ch] = (px[ps + ch] & ~1) | v; bi++;
+        }
+      ctx.putImageData(imd, 0, 0);
+      res(c.toDataURL('image/png'));
+    };
+    img.onerror = () => rej(new Error('Image load failed'));
+    img.src = url;
+  });
+}
+
+// ─── IMAGE LSB DECODE ─────────────────────────────────────
+function iDec(url) {
+  return new Promise((res, rej) => {
+    const img = new Image();
+    img.onload = () => {
+      const c = document.getElementById('wc');
+      c.width = img.width; c.height = img.height;
+      const ctx = c.getContext('2d'); ctx.drawImage(img, 0, 0);
+      const px = ctx.getImageData(0, 0, c.width, c.height).data;
+      const maxBits = Math.floor((px.length / 4) * 3);
+
+      function rb(n, sb) {
+        const out = new Uint8Array(n); let bi = sb;
+        for (let i = 0; i < n; i++) {
+          let byte = 0;
+          for (let b = 7; b >= 0; b--) {
+            if (bi >= maxBits) throw new Error('Read beyond image bounds');
+            byte |= (px[Math.floor(bi / 3) * 4 + bi % 3] & 1) << b; bi++;
+          }
+          out[i] = byte;
+        }
+        return { b: out, nb: bi };
+      }
+
+      try {
+        const hr = rb(5, 0);
+        // Strict marker check
+        if (hr.b[4] !== 0xAA) {
+          return rej(new Error(
+            `No VoterVault data found (marker byte = 0x${hr.b[4].toString(16).toUpperCase().padStart(2,'0')}, expected 0xAA). ` +
+            `Make sure you upload the PNG downloaded from VoterVault — do NOT use JPG (lossy compression destroys hidden data).`
+          ));
+        }
+        const n = (hr.b[0] << 24) | (hr.b[1] << 16) | (hr.b[2] << 8) | hr.b[3];
+        // Max realistic voter JSON payload ~10KB encrypted ≈ ~20KB max
+        const maxReasonable = 65536; // 64KB hard cap
+        const maxPixelCapacity = Math.floor(maxBits / 8) - 5;
+        if (n <= 0 || n > maxReasonable) {
+          return rej(new Error(
+            `Invalid payload length (${n} bytes). ` +
+            (n > maxReasonable
+              ? `This is larger than expected for voter data (max ${maxReasonable} bytes). The image may have been re-saved as JPG or edited.`
+              : `Length is zero or negative — image is likely not a VoterVault card.`)
+          ));
+        }
+        if (n > maxPixelCapacity) {
+          return rej(new Error(`Payload length (${n}) exceeds image capacity (${maxPixelCapacity}). Image may be corrupted or re-compressed.`));
+        }
+        res(rb(n, hr.nb).b);
+      } catch(e) {
+        rej(e);
+      }
+    };
+    img.onerror = () => rej(new Error('Image load failed'));
+    img.src = url;
+  });
+}
+
+// ─── GENERATE VOTER ID ────────────────────────────────────
+function genVoterID(name, dob) {
+  const prefix = name.replace(/\s+/g, '').toUpperCase().slice(0, 3).padEnd(3, 'X');
+  const year = dob ? dob.split('-')[0].slice(-2) : '00';
+  const rand = Math.random().toString(36).toUpperCase().slice(2, 8);
+  return `${prefix}${year}-${rand}`;
+}
+
+// ─── LOG ──────────────────────────────────────────────────
+function L(id, m, c = 'li') {
+  const el = document.getElementById(id), t = new Date().toLocaleTimeString('en', { hour12: false });
+  el.innerHTML += `<div class="lr"><span class="lt">[${t}]</span><span class="${c}">${m}</span></div>`;
+  el.scrollTop = el.scrollHeight;
+}
+
+// ─── REGISTER ────────────────────────────────────────────
+async function runRegister() {
+  document.getElementById('reg-out-panel').style.display = 'block';
+  document.getElementById('reg-log').innerHTML = '';
+  document.getElementById('reg-dl').classList.remove('show');
+  document.getElementById('reg-badge-wrap').innerHTML = '';
+
+  try {
+    L('reg-log', 'Starting voter registration...');
+
+    // Validate fields
+    const name = document.getElementById('v-name').value.trim();
+    const dob = document.getElementById('v-dob').value;
+    const gender = document.getElementById('v-gender').value;
+    const nation = document.getElementById('v-nation').value;
+    const vid = document.getElementById('v-id').value.trim();
+    const pan = document.getElementById('v-pan').value.trim().toUpperCase();
+    const cons = document.getElementById('v-const').value.trim();
+    const addr = document.getElementById('v-addr').value.trim();
+
+    if (!name) throw new Error('Full name is required');
+    if (!dob) throw new Error('Date of birth is required');
+    if (!gender) throw new Error('Gender is required');
+    if (!vid) throw new Error('Aadhaar ID is required');
+    if (!pan) throw new Error('PAN ID is required');
+    if (!cons) throw new Error('Constituency is required');
+    if (!S.photoURL) throw new Error('Voter photo is required — open camera or upload');
+
+    // One-time lock check
+    const aadhaarUsedBy = isIDUsed(vid);
+    const panUsedBy     = isIDUsed(pan);
+    if (aadhaarUsedBy) throw new Error(`Aadhaar ID already used for registration (Voter ID: ${aadhaarUsedBy}). Duplicate registration blocked.`);
+    if (panUsedBy)     throw new Error(`PAN ID already used for registration (Voter ID: ${panUsedBy}). Duplicate registration blocked.`);
+
+    // Dataset validation
+    const aadhaarRec = VOTER_DB.find(r => r.aadhaar === vid);
+    const panRec     = VOTER_DB.find(r => r.pan === pan);
+    if (!aadhaarRec) throw new Error('Aadhaar ID not found in electoral roll. Registration blocked.');
+    if (!panRec)     throw new Error('PAN ID not found in electoral roll. Registration blocked.');
+    if (aadhaarRec.name !== panRec.name) throw new Error('Aadhaar and PAN belong to different people. Identity mismatch — registration blocked.');
+    L('reg-log', `Identity verified in electoral roll: ${aadhaarRec.name}`, 'lok');
+
+    L('reg-log', `Voter: ${name}`, 'li');
+
+    // Password
+    if (S.encOn) {
+      const pw = document.getElementById('reg-pass').value;
+      const pw2 = document.getElementById('reg-pass2').value;
+      if (!pw) throw new Error('Encryption password is required');
+      if (pw.length < 8) throw new Error('Password must be at least 8 characters');
+      if (pw !== pw2) throw new Error('Passwords do not match');
+    }
+
+    // Build voter data JSON
+    const voterID = genVoterID(name, dob);
+    const registeredOn = new Date().toISOString();
+    const candidate = S.selectedCandidate;
+    if (!candidate) throw new Error('Please select a candidate to vote for');
+    // Embed face photo as base64 thumbnail (resized to 64x64 to keep payload small)
+    const faceThumb = resizeFaceThumb(S.photoURL, 64);
+    const voterData = {
+      voterID, name, dob, gender, nationality: nation,
+      nationalID: vid, panID: pan, constituency: cons, address: addr,
+      vote: candidate, registeredOn, version: '1.0',
+      faceThumb
+    };
+
+    L('reg-log', `Voter ID assigned: ${voterID}`, 'lok');
+    L('reg-log', 'Serializing voter data...');
+    let payload = new TextEncoder().encode(JSON.stringify(voterData));
+    L('reg-log', `Payload: ${payload.length} bytes`, 'li');
+
+    if (S.encOn) {
+      const pw = document.getElementById('reg-pass').value;
+      L('reg-log', 'Encrypting with AES-256-CBC + PBKDF2...');
+      payload = await aE(payload, pw);
+      L('reg-log', `Encrypted: ${payload.length} bytes`, 'lok');
+    }
+
+    L('reg-log', 'Embedding into voter photo via LSB steganography...');
+    const outDataURL = await iEnc(S.photoURL, payload);
+    L('reg-log', 'Steganographic embedding complete.', 'lok');
+
+    const blob = d2b(outDataURL);
+    S.regResult = { blob, fn: `VoterCard_${voterID}.png`, voterData };
+
+    // Mark IDs as used (one-time lock)
+    markIDUsed(vid, pan, voterID);
+    L('reg-log', 'IDs locked — cannot be used again.', 'lok');
+
+    // Save to Supabase
+    L('reg-log', 'Saving to database...');
+    const saved = await sbSaveVoter(voterData, voterData.faceThumb);
+    if (saved) {
+      L('reg-log', 'Saved to Supabase database.', 'lok');
+    } else {
+      L('reg-log', 'Running offline — not saved to database.', 'lw');
+    }
+    await sbLogAudit(voterID, 'register', 'success', `Candidate: ${voterData.vote}`);
+
+    // Show badge
+    document.getElementById('reg-badge-wrap').innerHTML = buildBadge(voterData);
+    document.getElementById('reg-dl-i').textContent = `${S.regResult.fn} — ${fb(blob.size)}`;
+    document.getElementById('reg-dl').classList.add('show');
+    L('reg-log', 'Voter card generated successfully!', 'lok');
+
+  } catch (e) {
+    L('reg-log', 'ERROR: ' + e.message, 'le');
+  }
+}
+
+function buildBadge(d) {
+  return `
+    <div class="voter-badge">
+      <div class="vb-header">
+        <div class="vb-seal"><svg viewBox="0 0 24 24"><path d="M12 2L4 6v6c0 5.5 3.8 10.7 8 12 4.2-1.3 8-6.5 8-12V6L12 2zm-1 9V7h2v4h-2zm0 4v-2h2v2h-2z"/></svg></div>
+        <div>
+          <div class="vb-title">VOTER IDENTITY CARD</div>
+          <div class="vb-sub">VoterVault Secure Registration System</div>
+        </div>
+      </div>
+      <div class="vb-grid">
+        <div class="vb-field vb-id">
+          <div class="vb-k">Voter ID</div>
+          <div class="vb-v">${d.voterID}</div>
+        </div>
+        <div class="vb-field">
+          <div class="vb-k">Full Name</div>
+          <div class="vb-v">${d.name}</div>
+        </div>
+        <div class="vb-field">
+          <div class="vb-k">Date of Birth</div>
+          <div class="vb-v">${d.dob}</div>
+        </div>
+        <div class="vb-field">
+          <div class="vb-k">Gender</div>
+          <div class="vb-v">${d.gender}</div>
+        </div>
+        <div class="vb-field">
+          <div class="vb-k">Nationality</div>
+          <div class="vb-v">${d.nationality}</div>
+        </div>
+        <div class="vb-field">
+          <div class="vb-k">Aadhaar ID</div>
+          <div class="vb-v">${d.nationalID}</div>
+        </div>
+        <div class="vb-field">
+          <div class="vb-k">PAN ID</div>
+          <div class="vb-v">${d.panID || '—'}</div>
+        </div>
+        <div class="vb-field">
+          <div class="vb-k">Constituency</div>
+          <div class="vb-v">${d.constituency}</div>
+        </div>
+        <div class="vb-field">
+          <div class="vb-k">Registered On</div>
+          <div class="vb-v">${new Date(d.registeredOn).toLocaleDateString('en-IN', {year:'numeric',month:'short',day:'numeric'})}</div>
+        </div>
+        <div class="vb-field" style="border-color:rgba(46,201,107,0.3);background:var(--green-dim);">
+          <div class="vb-k">Vote Cast For</div>
+          <div class="vb-v" style="color:var(--green);">Candidate ${d.vote}</div>
+        </div>
+      </div>
+      <div class="steg-status">
+        <svg width="12" height="12" viewBox="0 0 16 16" fill="currentColor"><path d="M8 1a4 4 0 0 1 4 4v1h1a1 1 0 0 1 1 1v7a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h1V5a4 4 0 0 1 4-4zm0 8a1.5 1.5 0 1 0 0 3 1.5 1.5 0 0 0 0-3z"/></svg>
+        AES-256 ENCRYPTED · LSB STEGANOGRAPHY EMBEDDED
+      </div>
+    </div>`;
+}
+
+// ─── VERIFY ──────────────────────────────────────────────
+async function runVerify() {
+  document.getElementById('ver-out-panel').style.display = 'block';
+  document.getElementById('ver-log').innerHTML = '';
+  document.getElementById('ver-result-wrap').innerHTML = '';
+  document.getElementById('ver-err').classList.remove('show');
+
+  try {
+    if (!S.verURL) throw new Error('Please upload a voter card image');
+
+    // Warn if filename suggests JPG
+    const verFile = document.getElementById('fi-ver').files[0];
+    if (verFile && /\.(jpe?g)$/i.test(verFile.name)) {
+      L('ver-log', 'WARNING: JPG detected — JPG lossy compression destroys LSB data. Only use the PNG downloaded from VoterVault.', 'lw');
+    }
+
+    L('ver-log', 'Loading voter card image...');
+
+    let raw = await iDec(S.verURL);
+    L('ver-log', `Extracted ${raw.length} bytes from image`, 'lok');
+
+    if (S.verDecOn) {
+      const pw = document.getElementById('ver-pass').value;
+      if (!pw) throw new Error('Decryption password required');
+      L('ver-log', 'Decrypting AES-256-CBC...');
+      raw = await aD(raw, pw);
+      L('ver-log', 'Decryption successful!', 'lok');
+    }
+
+    const json = new TextDecoder().decode(raw);
+    const d = JSON.parse(json);
+    L('ver-log', 'Voter data extracted and verified.', 'lok');
+
+    // Face match
+    let faceMatch = null;
+    if (S.verFaceURL && d.faceThumb) {
+      L('ver-log', 'Running face similarity comparison...');
+      const score = await compareFaces(d.faceThumb, S.verFaceURL);
+      faceMatch = { score };
+      const ok = score >= 40;
+      L('ver-log', `Face similarity: ${score}% — ${ok ? 'MATCH' : 'MISMATCH'}`, ok ? 'lok' : 'le');
+
+      // Show face comparison panel
+      document.getElementById('face-match-placeholder').style.display = 'none';
+      document.getElementById('face-match-result').style.display = 'block';
+      document.getElementById('face-img-stored').src = d.faceThumb;
+      document.getElementById('face-img-live').src = S.verFaceURL;
+      document.getElementById('face-score-val').textContent = score + '%';
+      document.getElementById('face-score-val').style.color = ok ? 'var(--green)' : 'var(--red)';
+      document.getElementById('face-verdict').textContent = ok ? '✓ IDENTITY CONFIRMED' : '✗ POSSIBLE IMPERSONATION';
+      document.getElementById('face-verdict').style.color = ok ? 'var(--green)' : 'var(--red)';
+      document.getElementById('face-match-box').className = 'face-match-box ' + (ok ? 'match-ok' : 'match-fail');
+    } else if (!d.faceThumb) {
+      L('ver-log', 'Note: This card has no embedded face (registered with older version).', 'lw');
+    } else {
+      L('ver-log', 'Note: No live face scanned — skipping face comparison.', 'lw');
+    }
+
+    await sbLogAudit(d.voterID, 'verify', faceMatch ? (faceMatch.score >= 40 ? 'pass' : 'fail') : 'no_face', `Score: ${faceMatch ? faceMatch.score : 'n/a'}`);
+    document.getElementById('ver-result-wrap').innerHTML = buildVerResult(d, faceMatch);
+
+  } catch (e) {
+    L('ver-log', 'FAILED: ' + e.message, 'le');
+    const b = document.getElementById('ver-err');
+    document.getElementById('ver-err-m').textContent = e.message;
+    b.classList.add('show');
+  }
+}
+
+function buildVerResult(d, faceMatch) {
+  const matchOK = faceMatch && faceMatch.score >= 40;
+  const matchColor = matchOK ? 'var(--green)' : 'var(--red)';
+  const matchLabel = faceMatch ? (matchOK ? `✓ FACE MATCH (${faceMatch.score}%)` : `✗ FACE MISMATCH (${faceMatch.score}%)`) : '— Face not compared';
+  return `
+    <div class="ver-result ${matchOK || !faceMatch ? 'ver-ok' : 'ver-fail'}">
+      <div class="ver-title">${matchOK || !faceMatch ? '✓ VOTER IDENTITY VERIFIED' : '✗ IDENTITY VERIFICATION FAILED'}</div>
+      <table class="ver-table">
+        <tr><td>Voter ID</td><td style="color:var(--accent);font-weight:600">${d.voterID}</td></tr>
+        <tr><td>Full Name</td><td>${d.name}</td></tr>
+        <tr><td>Date of Birth</td><td>${d.dob}</td></tr>
+        <tr><td>Gender</td><td>${d.gender}</td></tr>
+        <tr><td>Nationality</td><td>${d.nationality}</td></tr>
+        <tr><td>Aadhaar ID</td><td>${d.nationalID}</td></tr>
+        <tr><td>PAN ID</td><td>${d.panID || '—'}</td></tr>
+        <tr><td>Constituency</td><td>${d.constituency}</td></tr>
+        ${d.address ? `<tr><td>Address</td><td>${d.address}</td></tr>` : ''}
+        <tr><td>Vote Cast For</td><td style="color:var(--green);font-weight:600">Candidate ${d.vote || '—'}</td></tr>
+        <tr><td>Registered On</td><td>${new Date(d.registeredOn).toLocaleString('en-IN')}</td></tr>
+        <tr><td>Face Match</td><td style="color:${matchColor};font-weight:600">${matchLabel}</td></tr>
+      </table>
+    </div>`;
+}
+
+// ─── RESET ───────────────────────────────────────────────
+function resetReg() {
+  stopCam();
+  S.photoURL = null; S.photoFile = null; S.regResult = null;
+  document.getElementById('cam-wrap').style.display = 'none';
+  document.getElementById('cam-preview-wrap').style.display = 'none';
+  document.getElementById('pw-photo').style.display = 'none';
+  document.getElementById('photo-hint').style.display = 'block';
+  document.getElementById('btn-cam').disabled = false;
+  document.getElementById('btn-cam').innerHTML = `<svg viewBox="0 0 16 16" fill="currentColor"><path d="M2 4a1 1 0 0 0-1 1v6a1 1 0 0 0 1 1h8a1 1 0 0 0 1-1v-2l3 2V5l-3 2V5a1 1 0 0 0-1-1H2z"/></svg>Open Camera`;
+  document.getElementById('face-status').textContent = 'CAMERA OFF';
+  document.getElementById('face-status').style.color = 'var(--text3)';
+  ['v-name','v-id','v-pan','v-const','v-addr','reg-pass','reg-pass2'].forEach(id => document.getElementById(id).value = '');
+  ['tick-aadhaar','tick-pan'].forEach(id => { const el=document.getElementById(id); if(el){el.innerHTML='';el.className='id-tick';} });
+  ['v-id','v-pan'].forEach(id => { const el=document.getElementById(id); if(el) el.className=''; });
+  const cross = document.getElementById('id-crosscheck'); if(cross) cross.style.display='none';
+  document.getElementById('v-dob').value = '';
+  document.getElementById('v-gender').value = '';
+  S.selectedCandidate = null;
+  ['A','B','C'].forEach(x => document.getElementById('cand-'+x).classList.remove('selected'));
+  document.getElementById('cand-chosen').style.display = 'none';
+  document.getElementById('fn-photo').style.display = 'none';
+  document.getElementById('pw-photo').style.display = 'none';
+  document.getElementById('reg-out-panel').style.display = 'none';
+}
+function resetVer() {
+  stopVerCam();
+  S.verURL = null; S.verFaceURL = null;
+  document.getElementById('fn-ver').style.display = 'none';
+  document.getElementById('pw-ver').style.display = 'none';
+  document.getElementById('ver-pass').value = '';
+  document.getElementById('ver-out-panel').style.display = 'none';
+  document.getElementById('ver-cam-wrap').style.display = 'none';
+  document.getElementById('ver-cam-preview').style.display = 'none';
+  document.getElementById('ver-cam-btn-wrap').style.display = 'none';
+  document.getElementById('btn-ver-cam').disabled = false;
+  document.getElementById('ver-face-status').textContent = 'OFF';
+  document.getElementById('ver-face-status').style.color = 'var(--text3)';
+  document.getElementById('face-match-placeholder').style.display = 'block';
+  document.getElementById('face-match-result').style.display = 'none';
+}
+
+// ─── DOWNLOAD ────────────────────────────────────────────
+function dlReg() {
+  if (!S.regResult) return;
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(S.regResult.blob);
+  a.download = S.regResult.fn;
+  a.click();
+}
+
+// ─── UTILS ───────────────────────────────────────────────
+function d2b(url) {
+  const [h, d] = url.split(',');
+  const m = h.match(/:(.*?);/)[1], bin = atob(d), arr = new Uint8Array(bin.length);
+  for (let i = 0; i < bin.length; i++) arr[i] = bin.charCodeAt(i);
+  return new Blob([arr], { type: m });
+}
+function fb(n) {
+  if (n < 1024) return n + 'B';
+  if (n < 1048576) return (n / 1024).toFixed(1) + 'KB';
+  return (n / 1048576).toFixed(2) + 'MB';
+}
+
+// ─── DRAG EVENTS ─────────────────────────────────────────
+// Check Supabase on load
+(async () => {
+  const sb = getSB();
+  const el = document.getElementById('sb-status');
+  if (!sb) { if(el) { el.textContent = 'Not configured'; el.style.color = 'var(--text3)'; } return; }
+  try {
+    const { error } = await sb.from('voters').select('voter_id').limit(1);
+    if (error) throw error;
+    if(el) { el.textContent = 'Supabase connected'; el.style.color = 'var(--green)'; }
+  } catch(e) {
+    if(el) { el.textContent = 'DB error'; el.style.color = 'var(--red)'; }
+  }
+})();
+
+document.querySelectorAll('.dz').forEach(d => {
+  d.addEventListener('dragover', e => { e.preventDefault(); d.classList.add('over'); });
+  d.addEventListener('dragleave', () => d.classList.remove('over'));
+  d.addEventListener('drop', () => d.classList.remove('over'));
+});
+</script>
+</body>
+</html>
